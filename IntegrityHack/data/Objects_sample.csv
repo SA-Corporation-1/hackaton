@@ -1,0 +1,8 @@
+object_id,name,type,lat,lon,criticality
+101,Bridge A,Bridge,51.1605,71.4704,High
+102,Pipe B,Pipeline,51.1800,71.5000,Medium
+103,Pipe C,Pipeline,51.1750,71.5200,Low
+104,Tower D,PowerLineTower,51.1700,71.4800,Medium
+105,Tower E,PowerLineTower,51.1900,71.4650,High
+106,Plant F,ProcessingPlant,51.1650,71.4550,High
+107,Station G,CompressorStation,51.1850,71.4900,Low
