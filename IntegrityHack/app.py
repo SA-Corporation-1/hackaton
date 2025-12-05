@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
-import pydeck as pdk  # для карты
+import pydeck as pdk
+import plotly.express as px
+# для карты
 
 # TODO: потом подключите свои утилиты
 # from utils.data_utils import load_data, preprocess_data
