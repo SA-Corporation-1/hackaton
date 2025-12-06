@@ -181,9 +181,11 @@ def page_map():
 
     # 1. Проверяем, загружены ли данные
     if st.session_state.objects_df is None:
-        st.warning("Алдымен 'Импорт данных' бетінде файлдарды жүктеңіз. / "
-                   "Сначала загрузите данные на странице 'Импорт данных'. / "
-                   "Please upload data on the 'Import data' page first.")
+        st.warning(
+            "Алдымен 'Импорт данных' бетінде файлдарды жүктеңіз. / "
+            "Сначала загрузите данные на странице 'Импорт данных'. / "
+            "Please upload data on the 'Import data' page first."
+        )
         return
 
     objects_df = st.session_state.objects_df.copy()
@@ -206,7 +208,7 @@ def page_map():
     with filters_col:
         st.subheader("Фильтры / Filters / Сүзгілер")
 
-        # Тип объекта
+        # Тип объекта (type или object_type)
         type_col = None
         if "type" in objects_df.columns:
             type_col = "type"
@@ -223,7 +225,7 @@ def page_map():
             if selected_types:
                 objects_df = objects_df[objects_df[type_col].isin(selected_types)]
 
-        # Критичность
+        # Критичность (criticality или ml_label)
         crit_col = None
         if "criticality" in objects_df.columns:
             crit_col = "criticality"
@@ -263,6 +265,7 @@ def page_map():
             "Engineer can filter only relevant assets and see them on the map and in the table."
         )
 
+    # Егер фильтрден кейін ештеңе қалмаса
     if objects_df.empty:
         st.warning(
             "Таңдалған сүзгілер бойынша объектілер жоқ. / "
@@ -276,10 +279,10 @@ def page_map():
         st.subheader("Интерактивная карта / Interactive map / Интерактивті карта")
 
         # Авто-zoom по разбросу координат
-        lat_min, lat_max = objects_df["lat"].min(), objects_df["lat"].max()
-        lon_min, lon_max = objects_df["lon"].min(), objects_df["lon"].max()
-        lat_range = float(lat_max - lat_min)
-        lon_range = float(lon_max - lon_min)
+        lat_min, lat_max = float(objects_df["lat"].min()), float(objects_df["lat"].max())
+        lon_min, lon_max = float(objects_df["lon"].min()), float(objects_df["lon"].max())
+        lat_range = lat_max - lat_min
+        lon_range = lon_max - lon_min
         max_range = max(lat_range, lon_range)
 
         if max_range < 0.1:
@@ -291,8 +294,7 @@ def page_map():
         else:
             zoom = 4
 
-        # st.map үшін деректер
-        # Streamlit өзі Қазақстан картасын, жолдарды, қалаларды көрсетеді
+        # st.map – классическая карта (Қазақстан толық көрінеді)
         map_data = objects_df.copy()
 
         st.map(
@@ -305,94 +307,15 @@ def page_map():
 
         # --------- Таблица + метрики ---------
         st.subheader("Таблица объектов / Objects table / Объектілер кестесі")
-        cols_to_show = [c for c in objects_df.columns if c not in ["color"]]
-        st.dataframe(objects_df[cols_to_show].head(300))
+        st.dataframe(objects_df.head(300), use_container_width=True)
 
         st.markdown("### Қысқаша статистика / Summary / Қысқаша шолу")
         c1, c2, c3 = st.columns(3)
         with c1:
-            st.metric("Объектілер саны / Objects / Кол-во объектов", len(objects_df))
-        if crit_col:
-            with c2:
-                st.metric(
-                    "High саны / High count",
-                    int(objects_df[crit_col].astype(str).str.lower().eq("high").sum()),
-                )
-            with c3:
-                st.metric(
-                    "Medium саны / Medium count",
-                    int(objects_df[crit_col].astype(str).str.lower().eq("medium").sum()),
-                )
-
-
-        # Цвет по критичности
-        def get_color(row):
-            if not crit_col:
-                return [0, 128, 255]  # default blue
-            crit = str(row[crit_col]).lower()
-            if "high" in crit or "выс" in crit:
-                return [255, 0, 0]      # red
-            elif "medium" in crit or "сред" in crit:
-                return [255, 165, 0]    # orange
-            else:
-                return [0, 200, 0]      # green
-
-        objects_df["color"] = objects_df.apply(get_color, axis=1)
-
-        # Подготовим колонки для tooltip
-        name_col = None
-        if "name" in objects_df.columns:
-            name_col = "name"
-        elif "object_name" in objects_df.columns:
-            name_col = "object_name"
-
-        viz_df = objects_df.copy()
-        viz_df["name_ui"] = viz_df[name_col] if name_col else viz_df.get("object_id", "")
-        viz_df["type_ui"] = viz_df[type_col] if type_col else ""
-        viz_df["crit_ui"] = viz_df[crit_col] if crit_col else ""
-
-        layer = pdk.Layer(
-            "ScatterplotLayer",
-            data=viz_df,
-            get_position='[lon, lat]',
-            get_fill_color='color',
-            get_radius=120,
-            pickable=True,
-        )
-
-        tooltip = {
-            "html": """
-            <b>{name_ui}</b><br/>
-            Тип / Type: {type_ui}<br/>
-            Критичность / Criticality: {crit_ui}<br/>
-            ID: {object_id}
-            """,
-            "style": {"backgroundColor": "#111827", "color": "white"}
-        }
-
-        deck = pdk.Deck(
-            map_style="mapbox://styles/mapbox/dark-v10",
-            initial_view_state=pdk.ViewState(
-                latitude=midpoint[0],
-                longitude=midpoint[1],
-                zoom=zoom,
-                pitch=0,
-            ),
-            layers=[layer],
-            tooltip=tooltip,
-        )
-
-        st.pydeck_chart(deck, use_container_width=True)
-
-        # --------- Таблица + метрики ---------
-        st.subheader("Таблица объектов / Objects table / Объектілер кестесі")
-        cols_to_show = [c for c in objects_df.columns if c not in ["color"]]
-        st.dataframe(objects_df[cols_to_show].head(300))
-
-        st.markdown("### Қысқаша статистика / Summary / Қысқаша шолу")
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            st.metric("Объектілер саны / Objects / Кол-во объектов", len(objects_df))
+            st.metric(
+                "Объектілер саны / Objects / Кол-во объектов",
+                len(objects_df),
+            )
         if crit_col:
             with c2:
                 st.metric(
