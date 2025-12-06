@@ -744,7 +744,7 @@ def page_report():
         st.download_button(
             "Скачать отчёт",
             report,
-            "integrity_gpt_report.pdf",
+            "integrity_gpt_report.html",
             "text/html"
         )
 
