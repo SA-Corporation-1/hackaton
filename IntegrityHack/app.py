@@ -355,7 +355,7 @@ def page_dashboard():
         df_methods = (
             defects.groupby("method")["defect_found"]
 
-
+        )
 
 def page_report():
     st.title("Отчёт по рискам")
