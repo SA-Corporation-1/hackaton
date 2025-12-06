@@ -4,6 +4,7 @@ import streamlit as st
 import pandas as pd
 import pydeck as pdk
 import plotly.express as px
+from openai import OpenAI
 # для карты
 
 # TODO: потом подключите свои утилиты
@@ -26,36 +27,74 @@ if "processed_df" not in st.session_state:
 
 # ---------- ФУНКЦИИ ДЛЯ БЛОКОВ ----------
 
-def page_import():
-    st.title("Импорт данных")
+client = OpenAI(api_key="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")
 
-    st.write("Загрузите файлы Objects.csv и Diagnostics.csv")
 
-    objects_file = st.file_uploader("Objects.csv", type=["csv"], key="objects_uploader")
-    diagnostics_file = st.file_uploader("Diagnostics.csv", type=["csv"], key="diag_uploader")
+def page_report():
+    st.title("GPT-Отчёт по диагностике")
 
-    if st.button("Загрузить и обработать"):
-        if objects_file is None or diagnostics_file is None:
-            st.error("Пожалуйста, загрузите оба файла.")
-            return
+    if "diagnostics_df" not in st.session_state:
+        st.warning("Сначала загрузите данные на странице 'Импорт данных'.")
+        return
 
-        objects_df = pd.read_csv(objects_file)
-        diagnostics_df = pd.read_csv(diagnostics_file)
+    diagnostics = st.session_state["diagnostics_df"]
+    objects = st.session_state["objects_df"]
 
-        # Здесь потом будет вызов функций из utils:
-        # objects_df, diagnostics_df = preprocess_data(objects_df, diagnostics_df)
-        # processed_df = apply_ml_model(objects_df, diagnostics_df)
+    # KPI
+    total_inspections = len(diagnostics)
+    total_objects = objects["object_id"].nunique()
+    total_defects = diagnostics["defect_found"].sum()
 
-        # Пока просто сохраним как есть
-        st.session_state.objects_df = objects_df
-        st.session_state.diagnostics_df = diagnostics_df
-        st.session_state.processed_df = diagnostics_df  # временно
+    top_objects = (
+        diagnostics[diagnostics["defect_found"] == 1]
+        .groupby("object_id")
+        .size()
+        .sort_values(ascending=False)
+        .head(5)
+    )
 
-        st.success("Данные загружены!")
-        st.write("Objects (первые 5 строк):")
-        st.dataframe(objects_df.head())
-        st.write("Diagnostics (первые 5 строк):")
-        st.dataframe(diagnostics_df.head())
+    st.write("Общее количество обследований:", total_inspections)
+    st.write("Количество объектов:", total_objects)
+    st.write("Количество дефектов:", total_defects)
+
+    if st.button("Сформировать отчёт"):
+        st.spinner("GPT генерирует отчёт...")
+
+        prompt = f"""
+Сформируй технический отчёт по данным диагностики.
+
+Обследований: {total_inspections}
+Объектов: {total_objects}
+Дефектов: {total_defects}
+
+Проблемные объекты:
+{top_objects.to_string()}
+
+Структура отчёта:
+1. Общая оценка состояния
+2. Анализ критичности
+3. Основные риски
+4. Рекомендации
+5. Приоритетные объекты
+
+Пиши коротко, техническим языком.
+"""
+
+        response = client.responses.create(
+            model="gpt-4.1-mini",
+            input=prompt
+        )
+
+        report = response.output_text
+        st.subheader("Сформированный отчёт:")
+        st.markdown(report)
+
+        st.download_button(
+            label="Скачать отчёт",
+            data=report,
+            file_name="report.txt",
+            mime="text/plain"
+        )
 
 
 def page_map():
