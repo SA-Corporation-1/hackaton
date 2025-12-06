@@ -740,13 +740,13 @@ def page_report():
 
         st.subheader("Готовый GPT-Отчёт")
         st.markdown(report)
-html_text = report.strip()
-html_text = html_text.replace("\n\n", "</p><p>")
-html_text = html_text.replace("\n", "<br>")
+        html_text = report.strip()
+        html_text = html_text.replace("\n\n", "</p><p>")
+        html_text = html_text.replace("\n", "<br>")
 
-html_report = f"""
-<html>
-<head>
+   html_report = f"""
+  <html>
+  <head>
     <meta charset="utf-8">
     <title>IntegrityOS – GPT-отчёт</title>
     <style>
@@ -760,12 +760,12 @@ html_report = f"""
             margin-bottom: 15px;
         }}
     </style>
-</head>
-<body>
-<p>{html_text}</p>
-</body>
-</html>
-"""
+    </head>
+  <body>
+  <p>{html_text}</p>
+    </body>
+    </html>
+     """
         st.download_button(
             "Скачать отчёт",
             report,
