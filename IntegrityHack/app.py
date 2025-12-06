@@ -3,9 +3,15 @@ import pandas as pd
 import pydeck as pdk
 import plotly.express as px
 from openai import OpenAI
-
+from os import getenv
 from utils.db import init_db, SessionLocal, Object, Inspection, Defect
 from datetime import datetime
+
+st.set_page_config(
+    page_title="IntegrityOS – Demo",
+    page_icon="🛰️",
+    layout="wide",
+)
 
 # инициализируем БД (создаст таблицы, если их нет)
 init_db()
@@ -173,26 +179,29 @@ def page_import():
 def page_map():
     st.title("Карта объектов / Объектілер картасы")
 
+    # 1. Проверяем, загружены ли данные
     if st.session_state.objects_df is None:
         st.warning("Алдымен 'Импорт данных' бетінде файлдарды жүктеңіз.")
         return
 
     objects_df = st.session_state.objects_df.copy()
 
-    # Міндетті колонкалар
+    # 2. Проверяем, что есть координаты
     required_cols = {"lat", "lon"}
     if not required_cols.issubset(objects_df.columns):
         st.error(f"Objects.csv файлыңда міндетті түрде {required_cols} колонкалары болуы керек.")
         st.dataframe(objects_df.head())
         return
 
-    # --------- ЛЕЙАУТ: сол жақта фильтр, оң жақта карта + таблица ---------
+    # -------- ЛЕЙАУТ: слева фильтры, справа карта + таблица --------
     filters_col, map_col = st.columns([1, 3])
 
+    # ===================== ФИЛЬТРЫ (сол жақ) =======================
     with filters_col:
         st.subheader("Фильтры / Сүзгілер")
 
         # Тип объекта / Объект түрі
+        # подстраиваемся под твои колонки: type или object_type
         type_col = None
         if "type" in objects_df.columns:
             type_col = "type"
@@ -230,7 +239,9 @@ def page_map():
             c1, c2, c3 = st.columns(3)
             with c1:
                 if st.button("Только High"):
-                    objects_df = objects_df[objects_df[crit_col].astype(str).str.lower() == "high"]
+                    objects_df = objects_df[
+                        objects_df[crit_col].astype(str).str.lower() == "high"
+                    ]
             with c2:
                 if st.button("High + Medium"):
                     objects_df = objects_df[
@@ -238,7 +249,8 @@ def page_map():
                     ]
             with c3:
                 if st.button("Все"):
-                    pass  # фильтры уже выбраны сверху
+                    # ничего не делаем — уже выбрано в multiselect
+                    pass
 
         st.markdown("---")
         st.caption(
@@ -250,6 +262,7 @@ def page_map():
         st.warning("Таңдалған сүзгілер бойынша объектілер жоқ.")
         return
 
+    # ===================== КАРТА + ТАБЛИЦА (оң жақ) =====================
     with map_col:
         st.subheader("Интерактивная карта")
 
@@ -273,14 +286,13 @@ def page_map():
 
         objects_df["color"] = objects_df.apply(get_color, axis=1)
 
-        # Название объекта для tooltip
+        # Название объекта для tooltip: name или object_name
         name_col = None
         if "name" in objects_df.columns:
             name_col = "name"
         elif "object_name" in objects_df.columns:
             name_col = "object_name"
 
-        # если колонки нет – создадим пустую
         if not name_col:
             objects_df["__name"] = objects_df.get("object_id", "")
             name_col = "__name"
@@ -295,11 +307,11 @@ def page_map():
         )
 
         tooltip = {
-            "html": """
-            <b>{""" + name_col + """}</b><br/>
-            Тип: {""" + (type_col or "") + """}<br/>
-            Критичность: {""" + (crit_col or "") + """}<br/>
-            ID: {object_id}
+            "html": f"""
+            <b>{{{{ {name_col} }}}}</b><br/>
+            Тип: {{{{ {type_col or ''} }}}}<br/>
+            Критичность: {{{{ {crit_col or ''} }}}}<br/>
+            ID: {{{{ object_id }}}}
             """,
             "style": {"backgroundColor": "#111827", "color": "white"}
         }
@@ -330,16 +342,12 @@ def page_map():
             with c2:
                 st.metric(
                     "High саны",
-                    int(
-                        objects_df[crit_col].astype(str).str.lower().eq("high").sum()
-                    ),
+                    int(objects_df[crit_col].astype(str).str.lower().eq("high").sum()),
                 )
             with c3:
                 st.metric(
                     "Medium саны",
-                    int(
-                        objects_df[crit_col].astype(str).str.lower().eq("medium").sum()
-                    ),
+                    int(objects_df[crit_col].astype(str).str.lower().eq("medium").sum()),
                 )
 
 
