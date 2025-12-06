@@ -706,7 +706,7 @@ page = st.sidebar.radio(
         "Импорт данных",
         "Карта",
         "Дефекты",
-        "История объекта",   # ← НОВОЕ
+        "История объекта",   
         "Дашборд",
         "Отчёт",
     ],
@@ -717,6 +717,8 @@ if page == "Импорт данных":
     page_import()
 elif page == "Карта":
     page_map()
+elif page == "История объекта":      
+    page_history()
 elif page == "Дефекты":
     page_defects()
 elif page == "Дашборд":
