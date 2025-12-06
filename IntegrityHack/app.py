@@ -363,17 +363,12 @@ def page_report():
         st.warning("Сначала загрузите данные на странице «Импорт данных».")
         return
 
-    diagnostics = st.session_state["diagnostics_df"].copy()
-objects = st.session_state["objects_df"].copy()
+    if "objects_df" not in st.session_state or "diagnostics_df" not in st.session_state:
+    st.warning("Сначала загрузите данные на странице «Импорт данных».")
+    return
 
-# --- FIX: гарантируем наличие defect_found ---
-if "defect_found" not in diagnostics.columns:
-    if "severity" in diagnostics.columns:
-        diagnostics["defect_found"] = diagnostics["severity"].apply(
-            lambda x: 1 if str(x).lower() != "low" else 0
-        )
-    else:
-        diagnostics["defect_found"] = 0
+objects = st.session_state["objects_df"].copy()
+diagnostics = st.session_state["diagnostics_df"].copy()
 
     # KPI
     total_inspections = len(diagnostics)
