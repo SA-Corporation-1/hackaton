@@ -272,17 +272,16 @@ def page_map():
         return
 
     # ===================== КАРТА + ТАБЛИЦА (right) =====================
-    with map_col:
+       with map_col:
         st.subheader("Интерактивная карта / Interactive map / Интерактивті карта")
 
-        # Центр карты
+        # Авто-zoom по разбросу координат
         lat_min, lat_max = objects_df["lat"].min(), objects_df["lat"].max()
         lon_min, lon_max = objects_df["lon"].min(), objects_df["lon"].max()
         lat_range = float(lat_max - lat_min)
         lon_range = float(lon_max - lon_min)
         max_range = max(lat_range, lon_range)
 
-        # Простой авто-zoom
         if max_range < 0.1:
             zoom = 12
         elif max_range < 1:
@@ -292,10 +291,39 @@ def page_map():
         else:
             zoom = 4
 
-        midpoint = (
-            float(objects_df["lat"].mean()),
-            float(objects_df["lon"].mean()),
+        # st.map үшін деректер
+        # Streamlit өзі Қазақстан картасын, жолдарды, қалаларды көрсетеді
+        map_data = objects_df.copy()
+
+        st.map(
+            map_data,
+            latitude="lat",
+            longitude="lon",
+            zoom=zoom,
+            use_container_width=True,
         )
+
+        # --------- Таблица + метрики ---------
+        st.subheader("Таблица объектов / Objects table / Объектілер кестесі")
+        cols_to_show = [c for c in objects_df.columns if c not in ["color"]]
+        st.dataframe(objects_df[cols_to_show].head(300))
+
+        st.markdown("### Қысқаша статистика / Summary / Қысқаша шолу")
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.metric("Объектілер саны / Objects / Кол-во объектов", len(objects_df))
+        if crit_col:
+            with c2:
+                st.metric(
+                    "High саны / High count",
+                    int(objects_df[crit_col].astype(str).str.lower().eq("high").sum()),
+                )
+            with c3:
+                st.metric(
+                    "Medium саны / Medium count",
+                    int(objects_df[crit_col].astype(str).str.lower().eq("medium").sum()),
+                )
+
 
         # Цвет по критичности
         def get_color(row):
