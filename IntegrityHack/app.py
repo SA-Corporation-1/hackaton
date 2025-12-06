@@ -6,6 +6,8 @@ from openai import OpenAI
 from os import getenv
 from utils.db import init_db, SessionLocal, Object, Inspection, Defect
 from datetime import datetime
+from sqlalchemy import func
+
 
 st.set_page_config(
     page_title="IntegrityOS – Demo",
