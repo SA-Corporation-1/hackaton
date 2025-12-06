@@ -364,7 +364,16 @@ def page_report():
         return
 
     diagnostics = st.session_state["diagnostics_df"].copy()
-    objects = st.session_state["objects_df"].copy()
+objects = st.session_state["objects_df"].copy()
+
+# --- FIX: гарантируем наличие defect_found ---
+if "defect_found" not in diagnostics.columns:
+    if "severity" in diagnostics.columns:
+        diagnostics["defect_found"] = diagnostics["severity"].apply(
+            lambda x: 1 if str(x).lower() != "low" else 0
+        )
+    else:
+        diagnostics["defect_found"] = 0
 
     # KPI
     total_inspections = len(diagnostics)
