@@ -494,19 +494,29 @@ def page_map():
             "style": {"backgroundColor": "#111827", "color": "white"},
         }
 
+        # Базовая карта – CARTO dark (жолдар, қалалар, Қазақстан толық көрінеді)
+        tile_layer = pdk.Layer(
+            "TileLayer",
+            data="https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+            min_zoom=0,
+            max_zoom=22,
+            tile_size=256,
+        )
+
         deck = pdk.Deck(
-            map_style="mapbox://styles/mapbox/dark-v10",
+            layers=[tile_layer, layer],       # сначала фон, потом наши точки
             initial_view_state=pdk.ViewState(
                 latitude=midpoint[0],
                 longitude=midpoint[1],
                 zoom=zoom,
                 pitch=0,
             ),
-            layers=[layer],
+            map_style=None,                   # отключаем mapbox стиль
             tooltip=tooltip,
         )
 
         st.pydeck_chart(deck, use_container_width=True)
+
 
         # --------- Таблица + метрики ---------
         st.subheader(t("table_title"))
