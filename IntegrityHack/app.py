@@ -337,6 +337,19 @@ def page_map():
         st.dataframe(objects_df.head())
         return
 
+    # --------- Подготовка колонок type / criticality заранее ---------
+    type_col = None
+    if "type" in objects_df.columns:
+        type_col = "type"
+    elif "object_type" in objects_df.columns:
+        type_col = "object_type"
+
+    crit_col = None
+    if "criticality" in objects_df.columns:
+        crit_col = "criticality"
+    elif "ml_label" in objects_df.columns:
+        crit_col = "ml_label"
+
     # -------- ЛЕЙАУТ: слева фильтры, справа карта --------
     filters_col, map_col = st.columns([1, 3])
 
@@ -344,13 +357,7 @@ def page_map():
     with filters_col:
         st.subheader(t("filters_title"))
 
-        # Тип объекта (type или object_type)
-        type_col = None
-        if "type" in objects_df.columns:
-            type_col = "type"
-        elif "object_type" in objects_df.columns:
-            type_col = "object_type"
-
+        # Тип объекта
         if type_col:
             all_types = sorted(objects_df[type_col].dropna().unique())
             selected_types = st.multiselect(
@@ -361,13 +368,7 @@ def page_map():
             if selected_types:
                 objects_df = objects_df[objects_df[type_col].isin(selected_types)]
 
-               # Критичность (criticality или ml_label)
-        crit_col = None
-        if "criticality" in objects_df.columns:
-            crit_col = "criticality"
-        elif "ml_label" in objects_df.columns:
-            crit_col = "ml_label"
-
+        # Критичность
         if crit_col:
             all_crit = sorted(objects_df[crit_col].dropna().unique())
 
@@ -381,8 +382,7 @@ def page_map():
                 default=all_crit,
                 format_func=crit_format,
             )
-
-        if selected_crit:
+            if selected_crit:
                 objects_df = objects_df[objects_df[crit_col].isin(selected_crit)]
 
             st.markdown(f"**{t('quick_select')}:**")
@@ -399,9 +399,10 @@ def page_map():
                     ]
             with c3:
                 if st.button(t("all")):
+                    # ничего не делаем, остаются все значения
                     pass
 
-
+    # Если после фильтров ничего не осталось
     if objects_df.empty:
         st.warning(t("no_objects_for_filters"))
         return
@@ -410,7 +411,7 @@ def page_map():
     with map_col:
         st.subheader(t("map_subtitle"))
 
-        # Авто-zoom по координатам
+        # Авто-zoom по разбросу координат
         lat_min, lat_max = float(objects_df["lat"].min()), float(objects_df["lat"].max())
         lon_min, lon_max = float(objects_df["lon"].min()), float(objects_df["lon"].max())
         lat_range = lat_max - lat_min
@@ -427,18 +428,17 @@ def page_map():
             zoom = 4
 
         # -------- Цвет по критичности --------
-        # crit_col уже рассчитан выше
         def get_color(row):
             if not crit_col:
-                return [0, 128, 255]  # синий по умолчанию
+                return [0, 128, 255]  # default blue
 
             crit = str(row[crit_col]).lower()
             if "high" in crit:
-                return [255, 0, 0]       # красный
+                return [255, 0, 0]       # red
             elif "medium" in crit:
-                return [255, 165, 0]     # оранжевый
+                return [255, 165, 0]     # orange
             elif "low" in crit:
-                return [0, 200, 0]       # зелёный
+                return [0, 200, 0]       # green
             else:
                 return [100, 149, 237]   # fallback
 
@@ -450,14 +450,49 @@ def page_map():
             float(objects_df["lon"].mean()),
         )
 
+        # Подготовка данных для tooltip
+        name_col = None
+        if "name" in objects_df.columns:
+            name_col = "name"
+        elif "object_name" in objects_df.columns:
+            name_col = "object_name"
+
+        viz_df = objects_df.copy()
+        if name_col:
+            viz_df["name_ui"] = viz_df[name_col]
+        elif "object_id" in viz_df.columns:
+            viz_df["name_ui"] = viz_df["object_id"].astype(str)
+        else:
+            viz_df["name_ui"] = ""
+
+        if type_col:
+            viz_df["type_ui"] = viz_df[type_col]
+        else:
+            viz_df["type_ui"] = ""
+
+        if crit_col:
+            viz_df["crit_ui"] = viz_df[crit_col]
+        else:
+            viz_df["crit_ui"] = ""
+
         layer = pdk.Layer(
             "ScatterplotLayer",
-            data=objects_df,
+            data=viz_df,
             get_position='[lon, lat]',
             get_fill_color='color',
             get_radius=80,
             pickable=True,
         )
+
+        tooltip = {
+            "html": """
+                <b>{name_ui}</b><br/>
+                Тип: {type_ui}<br/>
+                Критичность: {crit_ui}<br/>
+                ID: {object_id}
+            """,
+            "style": {"backgroundColor": "#111827", "color": "white"},
+        }
 
         deck = pdk.Deck(
             map_style="mapbox://styles/mapbox/dark-v10",
@@ -468,20 +503,17 @@ def page_map():
                 pitch=0,
             ),
             layers=[layer],
-            tooltip={
-                "html": "<b>{name}</b><br/>"
-                        "Тип: {type}<br/>"
-                        "Критичность: {criticality}",
-                "style": {"backgroundColor": "#111827", "color": "white"},
-            },
+            tooltip=tooltip,
         )
 
         st.pydeck_chart(deck, use_container_width=True)
 
         # --------- Таблица + метрики ---------
         st.subheader(t("table_title"))
-        st.dataframe(objects_df.drop(columns=["color"], errors="ignore").head(300),
-                     use_container_width=True)
+        st.dataframe(
+            objects_df.drop(columns=["color"], errors="ignore").head(300),
+            use_container_width=True,
+        )
 
         st.markdown(f"### {t('summary_title')}")
         c1, c2, c3 = st.columns(3)
@@ -498,7 +530,6 @@ def page_map():
                     t("medium_metric"),
                     int(objects_df[crit_col].astype(str).str.lower().eq("medium").sum()),
                 )
-
 
 
 
