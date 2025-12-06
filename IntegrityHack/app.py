@@ -462,7 +462,7 @@ page = st.sidebar.radio(
         "Отчёт",
     ],
 )
-elif page == "Карта":
+if page == "Карта":
     page_map()
 elif page == "Дефекты":
     page_defects()
