@@ -579,6 +579,45 @@ def page_report():
 ДАННЫЕ ДАШБОРДА:
 
 
+- Всего обследований: {total_inspections}
+- Всего объектов: {total_objects}
+- Количество дефектов: {total_defects}
+
+Методы контроля (дефекты):
+{method_stats}
+
+Распределение по критичности:
+{crit_stats}
+
+Динамика по годам:
+{year_stats}
+
+Топ проблемных объектов (object_id → количество дефектов):
+{top_objects}
+
+Проанализируй эти данные и сформируй профессиональный технический отчёт. 
+Не выдумывай данные — анализируй только то, что дано.
+"""
+
+            client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+            response = client.responses.create(
+                model="gpt-4.1-mini",
+                input=prompt,
+            )
+
+            report = response.output_text
+
+        st.subheader("Готовый GPT-Отчёт")
+        st.markdown(report)
+
+        st.download_button(
+            "Скачать отчёт",
+            report,
+            "integrity_gpt_report.txt",
+            "text/plain"
+        )
+
+
 # ---------- МЕНЮ СТРАНИЦ ----------
 
 st.sidebar.title("IntegrityOS – Demo")
