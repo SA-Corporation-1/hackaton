@@ -30,6 +30,83 @@ if "processed_df" not in st.session_state:
     st.session_state.processed_df = None
 
 
+# ---------- МУЛЬТИЯЗЫЧНЫЙ UI ----------
+
+UI_TEXTS = {
+    "ru": {
+        "lang_name": "Русский",
+        "map_title": "Карта объектов",
+        "import_first": "Сначала загрузите данные на странице «Импорт данных».",
+        "no_latlon": "В Objects.csv обязательно должны быть колонки 'lat' и 'lon'.",
+        "filters_title": "Фильтры",
+        "object_type": "Тип объекта",
+        "criticality": "Критичность",
+        "quick_select": "Быстрый выбор",
+        "only_high": "Только High",
+        "high_medium": "High + Medium",
+        "all": "Все",
+        "no_objects_for_filters": "По выбранным фильтрам нет объектов.",
+        "map_subtitle": "Интерактивная карта",
+        "table_title": "Таблица объектов",
+        "summary_title": "Краткая статистика",
+        "objects_metric": "Количество объектов",
+        "high_metric": "High объектов",
+        "medium_metric": "Medium объектов",
+    },
+    "kk": {
+        "lang_name": "Қазақша",
+        "map_title": "Объектілер картасы",
+        "import_first": "Алдымен «Импорт данных» бетінде деректерді жүктеңіз.",
+        "no_latlon": "Objects.csv ішінде міндетті түрде 'lat' және 'lon' колонкалары болуы керек.",
+        "filters_title": "Сүзгілер",
+        "object_type": "Объект түрі",
+        "criticality": "Критикалылық",
+        "quick_select": "Жылдам таңдау",
+        "only_high": "Тек High",
+        "high_medium": "High + Medium",
+        "all": "Барлығы",
+        "no_objects_for_filters": "Таңдалған сүзгілер бойынша объектілер жоқ.",
+        "map_subtitle": "Интерактивті карта",
+        "table_title": "Объектілер кестесі",
+        "summary_title": "Қысқаша статистика",
+        "objects_metric": "Объектілер саны",
+        "high_metric": "High объектілер",
+        "medium_metric": "Medium объектілер",
+    },
+    "en": {
+        "lang_name": "English",
+        "map_title": "Objects map",
+        "import_first": "Please upload data on the 'Import data' page first.",
+        "no_latlon": "Objects.csv must contain 'lat' and 'lon' columns.",
+        "filters_title": "Filters",
+        "object_type": "Object type",
+        "criticality": "Criticality",
+        "quick_select": "Quick select",
+        "only_high": "Only High",
+        "high_medium": "High + Medium",
+        "all": "All",
+        "no_objects_for_filters": "No objects for the selected filters.",
+        "map_subtitle": "Interactive map",
+        "table_title": "Objects table",
+        "summary_title": "Summary",
+        "objects_metric": "Objects count",
+        "high_metric": "High objects",
+        "medium_metric": "Medium objects",
+    },
+}
+
+# язык по умолчанию — русский
+if "ui_lang" not in st.session_state:
+    st.session_state.ui_lang = "ru"
+
+
+def t(key: str) -> str:
+    """Берём строку для текущего языка, если нет — ключ."""
+    lang = st.session_state.get("ui_lang", "ru")
+    return UI_TEXTS.get(lang, UI_TEXTS["ru"]).get(key, key)
+
+
+
 # ---------- ФУНКЦИИ ДЛЯ РАБОТЫ С БАЗОЙ ДАННЫХ ----------
 
 def import_objects_to_db(objects_df: pd.DataFrame):
@@ -55,9 +132,6 @@ def import_objects_to_db(objects_df: pd.DataFrame):
         session.commit()
     finally:
         session.close()
-
-
-
 
 
 
@@ -121,15 +195,11 @@ def page_import():
 
 
 def page_map():
-    st.title("Карта / Map / Объектілер картасы")
+    st.title(t("map_title"))
 
     # 1. Проверяем, загружены ли данные
     if st.session_state.objects_df is None:
-        st.warning(
-            "Алдымен 'Импорт данных' бетінде файлдарды жүктеңіз. / "
-            "Сначала загрузите данные на странице 'Импорт данных'. / "
-            "Please upload data on the 'Import data' page first."
-        )
+        st.warning(t("import_first"))
         return
 
     objects_df = st.session_state.objects_df.copy()
@@ -137,11 +207,7 @@ def page_map():
     # 2. Проверяем, что есть координаты
     required_cols = {"lat", "lon"}
     if not required_cols.issubset(objects_df.columns):
-        st.error(
-            "Objects.csv ішінде міндетті түрде 'lat' және 'lon' колонкалары болуы керек. / "
-            "В Objects.csv обязательно должны быть колонки 'lat' и 'lon'. / "
-            "Objects.csv must contain 'lat' and 'lon' columns."
-        )
+        st.error(t("no_latlon"))
         st.dataframe(objects_df.head())
         return
 
@@ -150,7 +216,7 @@ def page_map():
 
     # ===================== ФИЛЬТРЫ (left) =====================
     with filters_col:
-        st.subheader("Фильтры / Filters / Сүзгілер")
+        st.subheader(t("filters_title"))
 
         # Тип объекта (type или object_type)
         type_col = None
@@ -162,7 +228,7 @@ def page_map():
         if type_col:
             all_types = sorted(objects_df[type_col].dropna().unique())
             selected_types = st.multiselect(
-                "Тип объекта / Object type / Объект түрі",
+                t("object_type"),
                 options=all_types,
                 default=all_types,
             )
@@ -179,48 +245,36 @@ def page_map():
         if crit_col:
             all_crit = sorted(objects_df[crit_col].dropna().unique())
             selected_crit = st.multiselect(
-                "Критичность / Criticality / Критикалылық",
+                t("criticality"),
                 options=all_crit,
                 default=all_crit,
             )
             if selected_crit:
                 objects_df = objects_df[objects_df[crit_col].isin(selected_crit)]
 
-            st.markdown("**Быстрый выбор / Quick select / Жылдам таңдау:**")
+            st.markdown(f"**{t('quick_select')}:**")
             c1, c2, c3 = st.columns(3)
             with c1:
-                if st.button("Только High"):
+                if st.button(t("only_high")):
                     objects_df = objects_df[
                         objects_df[crit_col].astype(str).str.lower() == "high"
                     ]
             with c2:
-                if st.button("High + Medium"):
+                if st.button(t("high_medium")):
                     objects_df = objects_df[
                         objects_df[crit_col].astype(str).str.lower().isin(["high", "medium"])
                     ]
             with c3:
-                if st.button("Все / All"):
-                    pass  # ничего не делаем — multiselect уже содержит все значения
+                if st.button(t("all")):
+                    pass  # multiselect уже содержит все
 
-        st.markdown("---")
-        st.caption(
-            "Инженер фильтр арқылы тек керекті объектілерді таңдап, картадан және кестеден соларды ғана көре алады. / "
-            "Инженер может отфильтровать только нужные объекты и увидеть их на карте и в таблице. / "
-            "Engineer can filter only relevant assets and see them on the map and in the table."
-        )
-
-    # Егер фильтрден кейін ештеңе қалмаса
     if objects_df.empty:
-        st.warning(
-            "Таңдалған сүзгілер бойынша объектілер жоқ. / "
-            "По выбранным фильтрам нет объектов. / "
-            "No objects for the selected filters."
-        )
+        st.warning(t("no_objects_for_filters"))
         return
 
     # ===================== КАРТА + ТАБЛИЦА (right) =====================
     with map_col:
-        st.subheader("Интерактивная карта / Interactive map / Интерактивті карта")
+        st.subheader(t("map_subtitle"))
 
         # Авто-zoom по разбросу координат
         lat_min, lat_max = float(objects_df["lat"].min()), float(objects_df["lat"].max())
@@ -238,11 +292,9 @@ def page_map():
         else:
             zoom = 4
 
-        # st.map – классическая карта (Қазақстан толық көрінеді)
-        map_data = objects_df.copy()
-
+        # Классическая карта Streamlit (OpenStreetMap фон, Қазақстан көрінеді)
         st.map(
-            map_data,
+            objects_df,
             latitude="lat",
             longitude="lon",
             zoom=zoom,
@@ -250,27 +302,25 @@ def page_map():
         )
 
         # --------- Таблица + метрики ---------
-        st.subheader("Таблица объектов / Objects table / Объектілер кестесі")
+        st.subheader(t("table_title"))
         st.dataframe(objects_df.head(300), use_container_width=True)
 
-        st.markdown("### Қысқаша статистика / Summary / Қысқаша шолу")
+        st.markdown(f"### {t('summary_title')}")
         c1, c2, c3 = st.columns(3)
         with c1:
-            st.metric(
-                "Объектілер саны / Objects / Кол-во объектов",
-                len(objects_df),
-            )
+            st.metric(t("objects_metric"), len(objects_df))
         if crit_col:
             with c2:
                 st.metric(
-                    "High саны / High count",
+                    t("high_metric"),
                     int(objects_df[crit_col].astype(str).str.lower().eq("high").sum()),
                 )
             with c3:
                 st.metric(
-                    "Medium саны / Medium count",
+                    t("medium_metric"),
                     int(objects_df[crit_col].astype(str).str.lower().eq("medium").sum()),
                 )
+
 
 
 
@@ -694,7 +744,7 @@ def page_report():
         st.download_button(
             "Скачать отчёт",
             report,
-            "integrity_gpt_report.html",
+            "integrity_gpt_report.pdf",
             "text/plain"
         )
 
@@ -703,17 +753,27 @@ def page_report():
 
 st.sidebar.title("IntegrityOS – Demo")
 
+# выбор языка интерфейса (по умолчанию RU)
+lang_code = st.sidebar.selectbox(
+    "Язык интерфейса",
+    options=["ru", "kk", "en"],
+    format_func=lambda code: UI_TEXTS[code]["lang_name"],
+    index=["ru", "kk", "en"].index(st.session_state.ui_lang),
+)
+st.session_state.ui_lang = lang_code
+
 page = st.sidebar.radio(
     "Выберите страницу",
     [
         "Импорт данных",
         "Карта",
         "Дефекты",
-        "История объекта",   
+        "История объекта",
         "Дашборд",
         "Отчёт",
     ],
 )
+
 
 
 if page == "Импорт данных":
