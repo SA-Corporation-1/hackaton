@@ -272,7 +272,7 @@ def page_map():
         return
 
     # ===================== КАРТА + ТАБЛИЦА (right) =====================
-       with map_col:
+    with map_col:
         st.subheader("Интерактивная карта / Interactive map / Интерактивті карта")
 
         # Авто-zoom по разбросу координат
