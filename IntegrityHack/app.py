@@ -357,9 +357,8 @@ def page_dashboard():
         )
 
 def page_report():
-    st.title("GPT-отчёт по диагностике и рискам")
+    st.title("GPT-Отчёт по результатам диагностики")
 
-    # 1. Проверяем, что есть данные
     if "diagnostics_df" not in st.session_state or "objects_df" not in st.session_state:
         st.warning("Сначала загрузите данные на странице «Импорт данных».")
         return
@@ -367,69 +366,113 @@ def page_report():
     diagnostics = st.session_state["diagnostics_df"].copy()
     objects = st.session_state["objects_df"].copy()
 
-    if diagnostics.empty or objects.empty:
-        st.warning("Данные загружены, но таблицы пустые.")
-        return
-
-    # 2. Страхуемся, если коллеги ещё не сделали defect_found / ml_label
-    if "severity" in diagnostics.columns:
-        if "defect_found" not in diagnostics.columns:
-            diagnostics["defect_found"] = diagnostics["severity"].apply(
-                lambda x: 1 if str(x).lower() != "low" else 0
-            )
-        if "ml_label" not in diagnostics.columns:
-            diagnostics["ml_label"] = diagnostics["severity"].astype(str).str.lower()
-    else:
-        diagnostics["defect_found"] = diagnostics.get("defect_found", 0)
-        diagnostics["ml_label"] = diagnostics.get("ml_label", "unknown")
-
-    # 3. Считаем KPI
+    # KPI
     total_inspections = len(diagnostics)
-    total_objects = objects["object_id"].nunique() if "object_id" in objects.columns else None
-    total_defects = int(diagnostics["defect_found"].sum())
+    total_objects = objects["object_id"].nunique()
+    total_defects = diagnostics["defect_found"].sum()
 
-    # распределение по критичности
-    crit_dist = (
-        diagnostics["ml_label"]
-        .value_counts()
-        .to_dict()
-        if "ml_label" in diagnostics.columns
-        else {}
-    )
-
-    # топ проблемных объектов
-    if "object_id" in diagnostics.columns:
-        defect_rows = diagnostics[diagnostics["defect_found"] == 1]
-        top_objects = (
-            defect_rows.groupby("object_id")
-            .size()
+    # Методы контроля
+    if "method" in diagnostics.columns:
+        method_stats = (
+            diagnostics[diagnostics["defect_found"] == 1]
+            .groupby("method")["defect_found"]
+            .sum()
             .sort_values(ascending=False)
-            .head(5)
+            .to_dict()
         )
     else:
-        top_objects = pd.Series(dtype=int)
+        method_stats = {}
 
-    st.subheader("Краткая сводка по данным")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Обследований", total_inspections)
-    with col2:
-        st.metric("Объектов", total_objects if total_objects is not None else "—")
-    with col3:
-        st.metric("Выявлено дефектов", total_defects)
+    # Критичность
+    crit_stats = diagnostics["ml_label"].value_counts().to_dict()
 
-    if not top_objects.empty:
-        st.markdown("Топ-5 объектов по количеству дефектов:")
-        st.dataframe(top_objects.rename("defects"), use_container_width=True)
+    # Динамика по годам
+    if "year" in diagnostics.columns:
+        year_stats = (
+            diagnostics.groupby("year")["object_id"]
+            .count()
+            .sort_index()
+            .to_dict()
+        )
     else:
-        st.info("В данных не найдено объектов с дефектами (defect_found == 1).")
+        year_stats = {}
 
-    st.markdown("---")
+    # Топ-объекты
+    top_objects = (
+        diagnostics[diagnostics["defect_found"] == 1]
+        .groupby("object_id")["defect_found"]
+        .sum()
+        .sort_values(ascending=False)
+        .head(5)
+        .to_dict()
+    )
 
-if st.button("Сформировать GPT-отчёт"):
-    with st.spinner("GPT анализирует данные..."):
-        st.info("GPT временно недоступен. Отчёт не сформирован.")
+    st.subheader("Сводная информация (данные дашборда)")
+    st.write("Обследований:", total_inspections)
+    st.write("Объектов:", total_objects)
+    st.write("Дефектов:", total_defects)
+    st.write("Методы:", method_stats)
+    st.write("Критичность:", crit_stats)
+    st.write("Динамика:", year_stats)
+    st.write("Топ объектов:", top_objects)
 
+    if st.button("Сформировать отчёт"):
+        with st.spinner("Генерация полного инженерного отчёта..."):
+
+            # --- GPT PROMPT УЛУЧШЕН ---
+            prompt = f"""
+Ты — инженер по промышленной безопасности. 
+Ниже данные технического дашборда IntegrityOS, который анализирует объекты инфраструктуры.
+
+Проанализируй эти данные как эксперт и составь:
+
+1) Общую оценку ситуации  
+2) Краткий анализ дефектов  
+3) Какие методы контроля наиболее эффективны  
+4) Какие объекты наиболее проблемные и почему  
+5) Что нужно сделать в первую очередь (приоритетный план работы)  
+6) Риски, если ничего не делать  
+7) Профессиональные рекомендации инженера  
+
+ДАННЫЕ ДАШБОРДА:
+
+- Всего обследований: {total_inspections}
+- Всего объектов: {total_objects}
+- Количество дефектов: {total_defects}
+
+Методы контроля (дефекты):
+{method_stats}
+
+Распределение по критичности:
+{crit_stats}
+
+Динамика по годам:
+{year_stats}
+
+Топ проблемных объектов (object_id → количество дефектов):
+{top_objects}
+
+Проанализируй эти данные и сформируй профессиональный технический отчёт. 
+Не выдумывай данные — анализируй только то, что дано.
+"""
+
+            client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+            response = client.responses.create(
+                model="gpt-4.1-mini",
+                input=prompt,
+            )
+
+            report = response.output_text
+
+        st.subheader("Готовый GPT-Отчёт")
+        st.markdown(report)
+
+        st.download_button(
+            "Скачать отчёт",
+            report,
+            "integrity_gpt_report.txt",
+            "text/plain"
+        )
 
 # ---------- МЕНЮ СТРАНИЦ ----------
 
