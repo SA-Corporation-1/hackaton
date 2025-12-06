@@ -745,7 +745,7 @@ def page_report():
             "Скачать отчёт",
             report,
             "integrity_gpt_report.pdf",
-            "text/plain"
+            "text/html"
         )
 
 
