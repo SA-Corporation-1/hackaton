@@ -4,3 +4,4 @@ scikit-learn
 openai
 pydeck
 plotly
+sqlalchemy
