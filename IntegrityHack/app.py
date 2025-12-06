@@ -359,16 +359,14 @@ def page_dashboard():
 def page_report():
     st.title("GPT-Отчёт по результатам диагностики")
 
+    # Проверяем, что данные загружены
     if "diagnostics_df" not in st.session_state or "objects_df" not in st.session_state:
         st.warning("Сначала загрузите данные на странице «Импорт данных».")
         return
 
-    if "objects_df" not in st.session_state or "diagnostics_df" not in st.session_state:
-    st.warning("Сначала загрузите данные на странице «Импорт данных».")
-    return
-
-objects = st.session_state["objects_df"].copy()
-diagnostics = st.session_state["diagnostics_df"].copy()
+    # Берём копии датафреймов
+    objects = st.session_state["objects_df"].copy()
+    diagnostics = st.session_state["diagnostics_df"].copy()
 
     # KPI
     total_inspections = len(diagnostics)
