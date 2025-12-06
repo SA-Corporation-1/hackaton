@@ -3,15 +3,12 @@ import pandas as pd
 import pydeck as pdk
 import plotly.express as px
 from openai import OpenAI
-from utils.db import init_db
+
+from utils.db import init_db, SessionLocal, Object, Inspection, Defect
+from datetime import datetime
+
+# инициализируем БД (создаст таблицы, если их нет)
 init_db()
-# для карты
-
-# TODO: потом подключите свои утилиты
-# from utils.data_utils import load_data, preprocess_data
-# from utils.ml_utils import apply_ml_model
-# from utils.report_utils import generate_gpt_report
-
 
 # ---------- ГЛОБАЛЬНОЕ СОСТОЯНИЕ ----------
 
@@ -25,9 +22,108 @@ if "processed_df" not in st.session_state:
     st.session_state.processed_df = None
 
 
-# ---------- ФУНКЦИИ ДЛЯ БЛОКОВ ----------
+# ---------- ФУНКЦИИ ДЛЯ РАБОТЫ С БАЗОЙ ДАННЫХ ----------
+
+def import_objects_to_db(objects_df: pd.DataFrame):
+    """Сохраняем данные Objects.csv в таблицу objects."""
+    session = SessionLocal()
+    try:
+        for _, row in objects_df.iterrows():
+            try:
+                obj = Object(
+                    id=int(row["object_id"]),
+                    object_name=str(row.get("object_name", "")),
+                    object_type=str(row.get("object_type", "")),
+                    pipeline=str(row.get("pipeline", "")),
+                    lat=float(row["lat"]) if "lat" in row and pd.notna(row["lat"]) else None,
+                    lon=float(row["lon"]) if "lon" in row and pd.notna(row["lon"]) else None,
+                    year=int(row["year"]) if "year" in row and pd.notna(row["year"]) else None,
+                    material=str(row.get("material", "")),
+                )
+                session.merge(obj)   # upsert
+            except Exception as e:
+                print("Ошибка при импорте объекта:", e)
+                continue
+        session.commit()
+    finally:
+        session.close()
+
+
+def import_diagnostics_to_db(diagnostics_df: pd.DataFrame):
+    """Сохраняем данные Diagnostics.csv в таблицы inspections и defects."""
+    session = SessionLocal()
+    try:
+        for _, row in diagnostics_df.iterrows():
+            try:
+                date_raw = row.get("date", None)
+                date_parsed = pd.to_datetime(date_raw, errors="coerce")
+                if pd.isna(date_parsed):
+                    continue
+
+                defect_raw = str(row.get("defect_found", "")).lower()
+                defect_found = defect_raw in ("1", "true", "yes", "да")
+
+                insp = Inspection(
+                    id=int(row["diag_id"]),
+                    object_id=int(row["object_id"]),
+                    date=date_parsed.date(),
+                    method=str(row.get("method", "")),
+                    temperature=float(row["temperature"]) if "temperature" in row and pd.notna(row["temperature"]) else None,
+                    humidity=float(row["humidity"]) if "humidity" in row and pd.notna(row["humidity"]) else None,
+                    illumination=float(row["illumination"]) if "illumination" in row and pd.notna(row["illumination"]) else None,
+                    defect_found=defect_found,
+                    defect_descr=str(row.get("defect_description", "")),
+                    quality_grade=str(row.get("quality_grade", "")),
+                    param1=float(row["param1"]) if "param1" in row and pd.notna(row["param1"]) else None,
+                    param2=float(row["param2"]) if "param2" in row and pd.notna(row["param2"]) else None,
+                    param3=float(row["param3"]) if "param3" in row and pd.notna(row["param3"]) else None,
+                    ml_label=str(row.get("ml_label", "")),
+                )
+                session.merge(insp)
+
+                if defect_found:
+                    defect = Defect(
+                        inspection_id=insp.id,
+                        depth=insp.param1,
+                        length=insp.param2,
+                        width=insp.param3,
+                        severity=insp.ml_label,
+                        description=insp.defect_descr,
+                    )
+                    session.add(defect)
+
+            except Exception as e:
+                print("Ошибка при импорте диагностики:", e)
+                continue
+
+        session.commit()
+    finally:
+        session.close()
+
+
+def debug_db_panel():
+    """Небольшая панель проверки, что база реально работает."""
+    st.markdown("### Проверка базы данных (debug)")
+    try:
+        session = SessionLocal()
+        objects_count = session.query(Object).count()
+        inspections_count = session.query(Inspection).count()
+        defects_count = session.query(Defect).count()
+        session.close()
+
+        st.write(f"Объектов в базе: **{objects_count}**")
+        st.write(f"Диагностик в базе: **{inspections_count}**")
+        st.write(f"Дефектов в базе: **{defects_count}**")
+    except Exception as e:
+        st.error(f"Ошибка при работе с базой данных: {e}")
+
+
+# ---------- КЛИЕНТ OPENAI ----------
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+
+
+# ---------- ФУНКЦИИ ДЛЯ БЛОКОВ ----------
 
 def page_import():
     st.title("Импорт данных")
@@ -45,20 +141,24 @@ def page_import():
         objects_df = pd.read_csv(objects_file)
         diagnostics_df = pd.read_csv(diagnostics_file)
 
-        # Здесь потом будет вызов функций из utils:
-        # objects_df, diagnostics_df = preprocess_data(objects_df, diagnostics_df)
-        # processed_df = apply_ml_model(objects_df, diagnostics_df)
-
-        # Пока просто сохраним как есть
+        # сохраняем в session_state, как раньше
         st.session_state.objects_df = objects_df
         st.session_state.diagnostics_df = diagnostics_df
         st.session_state.processed_df = diagnostics_df  # временно
 
-        st.success("Данные загружены!")
+        # дополнительно сохраняем в БД
+        import_objects_to_db(objects_df)
+        import_diagnostics_to_db(diagnostics_df)
+
+        st.success("Данные загружены и сохранены в базе данных!")
+
         st.write("Objects (первые 5 строк):")
         st.dataframe(objects_df.head())
         st.write("Diagnostics (первые 5 строк):")
         st.dataframe(diagnostics_df.head())
+
+        debug_db_panel()
+
 
 def page_map():
     st.title("Карта объектов")
@@ -161,7 +261,6 @@ def page_map():
     st.dataframe(objects_df.head(200))
 
 
-
 def page_defects():
     st.title("Список дефектов / диагностик")
 
@@ -203,7 +302,6 @@ def page_defects():
 
     # Фильтр по диапазону дат (если есть колонка date)
     if "date" in diagnostics_df.columns:
-        # Попробуем привести к datetime
         diagnostics_df["date_parsed"] = pd.to_datetime(
             diagnostics_df["date"], errors="coerce"
         )
@@ -230,14 +328,12 @@ def page_defects():
 
     st.subheader("Таблица диагностик")
 
-    # Выбор колонок для отображения (чтобы не было слишком много)
     cols_to_show = [
         col for col in diagnostics_df.columns
         if col not in ["date_parsed"]
     ]
     st.dataframe(diagnostics_df[cols_to_show].head(300))
 
-    # Опционально: небольшой summary
     st.subheader("Краткая статистика")
     st.write("Количество диагностик:", len(diagnostics_df))
 
@@ -246,11 +342,10 @@ def page_defects():
         st.dataframe(diagnostics_df[crit_col].value_counts())
 
 
-
 def page_dashboard():
     st.title("Дашборд диагностики объектов")
 
-    # 1. Проверка данных
+    # проверяем наличие данных
     if "objects_df" not in st.session_state or "diagnostics_df" not in st.session_state:
         st.warning("Сначала загрузите данные на странице «Импорт данных».")
         return
@@ -262,8 +357,7 @@ def page_dashboard():
         st.warning("Таблицы пустые. Проверьте загрузку CSV.")
         return
 
-    # 2. Предобработка (страховка)
-    # Дата → год
+    # дата → год
     if "date" in diagnostics.columns:
         diagnostics["date"] = pd.to_datetime(diagnostics["date"], errors="coerce")
         diagnostics["year"] = diagnostics["date"].dt.year
@@ -286,7 +380,7 @@ def page_dashboard():
         else:
             diagnostics["ml_label"] = "unknown"
 
-    # 3. ФИЛЬТРЫ (слева сверху)
+    # 3. ФИЛЬТРЫ
     st.sidebar.subheader("Фильтры дашборда")
 
     # Год
@@ -319,14 +413,13 @@ def page_dashboard():
     if crit_filter != "Все уровни":
         filtered = filtered[filtered["ml_label"] == crit_filter]
 
-    # 4. KPI по отфильтрованным данным
+    # 4. KPI
     st.markdown("### Сводные показатели (с учётом фильтров)")
 
     total_inspections = len(filtered)
     total_objects = filtered["object_id"].nunique() if "object_id" in filtered.columns else 0
     total_defects = int(filtered["defect_found"].sum())
 
-    # высокая критичность
     if "criticality" in objects.columns:
         high_crit_objects = (
             objects["criticality"].astype(str).str.lower().eq("high").sum()
@@ -352,129 +445,95 @@ def page_dashboard():
 
     if "method" in filtered.columns and not defects.empty:
         df_methods = (
-            defects.groupby("method")["defect_found"]
-
+            defects.groupby("method")["defect_found"].sum().reset_index()
         )
+        fig = px.bar(
+            df_methods,
+            x="method",
+            y="defect_found",
+            labels={"method": "Метод контроля", "defect_found": "Количество дефектов"},
+            title="Количество дефектов по методам контроля",
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("Нет данных о дефектах для построения графика.")
+
 
 def page_report():
-    st.title("GPT-Отчёт по результатам диагностики")
+    st.title("GPT-отчёт по диагностике и рискам")
 
-    # Проверяем, что данные загружены
+    # 1. Проверяем, что есть данные
     if "diagnostics_df" not in st.session_state or "objects_df" not in st.session_state:
         st.warning("Сначала загрузите данные на странице «Импорт данных».")
         return
 
-    # Берём копии датафреймов
-    objects = st.session_state["objects_df"].copy()
     diagnostics = st.session_state["diagnostics_df"].copy()
+    objects = st.session_state["objects_df"].copy()
 
-    # KPI
+    if diagnostics.empty or objects.empty:
+        st.warning("Данные загружены, но таблицы пустые.")
+        return
+
+    # 2. Страхуемся, если коллеги ещё не сделали defect_found / ml_label
+    if "severity" in diagnostics.columns:
+        if "defect_found" not in diagnostics.columns:
+            diagnostics["defect_found"] = diagnostics["severity"].apply(
+                lambda x: 1 if str(x).lower() != "low" else 0
+            )
+        if "ml_label" not in diagnostics.columns:
+            diagnostics["ml_label"] = diagnostics["severity"].astype(str).str.lower()
+    else:
+        if "defect_found" not in diagnostics.columns:
+            diagnostics["defect_found"] = 0
+        if "ml_label" not in diagnostics.columns:
+            diagnostics["ml_label"] = "unknown"
+
+    # 3. Считаем KPI
     total_inspections = len(diagnostics)
-    total_objects = objects["object_id"].nunique()
-    total_defects = diagnostics["defect_found"].sum()
+    total_objects = objects["object_id"].nunique() if "object_id" in objects.columns else None
+    total_defects = int(diagnostics["defect_found"].sum())
 
-    # Методы контроля
-    if "method" in diagnostics.columns:
-        method_stats = (
-            diagnostics[diagnostics["defect_found"] == 1]
-            .groupby("method")["defect_found"]
-            .sum()
-            .sort_values(ascending=False)
-            .to_dict()
-        )
-    else:
-        method_stats = {}
-
-    # Критичность
-    crit_stats = diagnostics["ml_label"].value_counts().to_dict()
-
-    # Динамика по годам
-    if "year" in diagnostics.columns:
-        year_stats = (
-            diagnostics.groupby("year")["object_id"]
-            .count()
-            .sort_index()
-            .to_dict()
-        )
-    else:
-        year_stats = {}
-
-    # Топ-объекты
-    top_objects = (
-        diagnostics[diagnostics["defect_found"] == 1]
-        .groupby("object_id")["defect_found"]
-        .sum()
-        .sort_values(ascending=False)
-        .head(5)
+    crit_dist = (
+        diagnostics["ml_label"]
+        .value_counts()
         .to_dict()
+        if "ml_label" in diagnostics.columns
+        else {}
     )
 
-    st.subheader("Сводная информация (данные дашборда)")
-    st.write("Обследований:", total_inspections)
-    st.write("Объектов:", total_objects)
-    st.write("Дефектов:", total_defects)
-    st.write("Методы:", method_stats)
-    st.write("Критичность:", crit_stats)
-    st.write("Динамика:", year_stats)
-    st.write("Топ объектов:", top_objects)
-
-    if st.button("Сформировать отчёт"):
-        with st.spinner("Генерация полного инженерного отчёта..."):
-
-            # --- GPT PROMPT УЛУЧШЕН ---
-            prompt = f"""
-Ты — инженер по промышленной безопасности. 
-Ниже данные технического дашборда IntegrityOS, который анализирует объекты инфраструктуры.
-
-Проанализируй эти данные как эксперт и составь:
-
-1) Общую оценку ситуации  
-2) Краткий анализ дефектов  
-3) Какие методы контроля наиболее эффективны  
-4) Какие объекты наиболее проблемные и почему  
-5) Что нужно сделать в первую очередь (приоритетный план работы)  
-6) Риски, если ничего не делать  
-7) Профессиональные рекомендации инженера  
-
-ДАННЫЕ ДАШБОРДА:
-
-- Всего обследований: {total_inspections}
-- Всего объектов: {total_objects}
-- Количество дефектов: {total_defects}
-
-Методы контроля (дефекты):
-{method_stats}
-
-Распределение по критичности:
-{crit_stats}
-
-Динамика по годам:
-{year_stats}
-
-Топ проблемных объектов (object_id → количество дефектов):
-{top_objects}
-
-Проанализируй эти данные и сформируй профессиональный технический отчёт. 
-Не выдумывай данные — анализируй только то, что дано.
-"""
-
-            client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-            response = client.responses.create(
-                model="gpt-4.1-mini",
-                input=prompt,
-            )
-
-            report = response.output_text
-
-        st.subheader("Готовый GPT-Отчёт")
-        st.markdown(report)
-
-        st.download_button(
-            "Скачать отчёт",
-            report,
-            "integrity_gpt_report.txt",
-            "text/plain"
+    # топ проблемных объектов
+    if "object_id" in diagnostics.columns:
+        defect_rows = diagnostics[diagnostics["defect_found"] == 1]
+        top_objects = (
+            defect_rows.groupby("object_id")
+            .size()
+            .sort_values(ascending=False)
+            .head(5)
         )
+    else:
+        top_objects = pd.Series(dtype=int)
+
+    st.subheader("Краткая сводка по данным")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Обследований", total_inspections)
+    with col2:
+        st.metric("Объектов", total_objects if total_objects is not None else "—")
+    with col3:
+        st.metric("Выявлено дефектов", total_defects)
+
+    if not top_objects.empty:
+        st.markdown("Топ-5 объектов по количеству дефектов:")
+        st.dataframe(top_objects.rename("defects"), use_container_width=True)
+    else:
+        st.info("В данных не найдено объектов с дефектами (defect_found == 1).")
+
+    st.markdown("---")
+
+    if st.button("Сформировать GPT-отчёт"):
+        with st.spinner("GPT анализирует данные..."):
+            st.info("GPT временно недоступен. Отчёт не сформирован.")
+
 
 # ---------- МЕНЮ СТРАНИЦ ----------
 
