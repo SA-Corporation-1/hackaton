@@ -1,5 +1,4 @@
-from utils.db import init_db
-init_db()
+
 import streamlit as st
 import pandas as pd
 import pydeck as pdk
