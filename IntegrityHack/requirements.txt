@@ -5,3 +5,4 @@ openai
 pydeck
 plotly
 sqlalchemy
+python-dotenv
