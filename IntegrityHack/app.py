@@ -67,6 +67,7 @@ UI_TEXTS = {
         "no_objects_for_filters": "По выбранным фильтрам нет объектов.",
     },
     "kk": {
+        "upload_both": "Екі файлды да жүктеңіз.",
         "menu_select_page": "Бетті таңдаңыз",
         "menu_import": "Деректерді импорттау",
         "menu_map": "Карта",
@@ -99,6 +100,7 @@ UI_TEXTS = {
         "no_objects_for_filters": "Таңдалған сүзгілер бойынша объектілер жоқ.",
     },
     "en": {
+        "upload_both": "Please upload both files.",
         "menu_select_page": "Select page",
         "menu_import": "Data import",
         "menu_map": "Map",
@@ -131,6 +133,25 @@ UI_TEXTS = {
         "no_objects_for_filters": "No objects for the selected filters.",
     },
 }
+
+CRIT_LABELS = {
+    "ru": {
+        "High": "Высокая",
+        "Medium": "Средняя",
+        "Low": "Низкая",
+    },
+    "kk": {
+        "High": "Жоғары",
+        "Medium": "Орташа",
+        "Low": "Төмен",
+    },
+    "en": {
+        "High": "High",
+        "Medium": "Medium",
+        "Low": "Low",
+    },
+}
+
 
 # язык по умолчанию — русский
 if "ui_lang" not in st.session_state:
@@ -276,6 +297,7 @@ def page_import():
             st.error("Пожалуйста, загрузите оба файла.")
             return
 
+
         objects_df = pd.read_csv(objects_file)
         diagnostics_df = pd.read_csv(diagnostics_file)
 
@@ -346,15 +368,22 @@ def page_map():
         elif "ml_label" in objects_df.columns:
             crit_col = "ml_label"
 
-        if crit_col:
+               if crit_col:
             all_crit = sorted(objects_df[crit_col].dropna().unique())
+
+            def crit_format(v):
+                lang = st.session_state.get("ui_lang", "ru")
+                return CRIT_LABELS.get(lang, {}).get(str(v), str(v))
+
             selected_crit = st.multiselect(
                 t("criticality"),
                 options=all_crit,
                 default=all_crit,
+                format_func=crit_format,
             )
             if selected_crit:
                 objects_df = objects_df[objects_df[crit_col].isin(selected_crit)]
+
 
             st.markdown(f"**{t('quick_select')}:**")
             c1, c2, c3 = st.columns(3)
@@ -380,7 +409,7 @@ def page_map():
     with map_col:
         st.subheader(t("map_subtitle"))
 
-        # Авто-zoom по разбросу координат
+        # Авто-zoom по координатам
         lat_min, lat_max = float(objects_df["lat"].min()), float(objects_df["lat"].max())
         lon_min, lon_max = float(objects_df["lon"].min()), float(objects_df["lon"].max())
         lat_range = lat_max - lat_min
@@ -396,18 +425,62 @@ def page_map():
         else:
             zoom = 4
 
-        # Классическая карта Streamlit (OpenStreetMap фон, Қазақстан көрінеді)
-        st.map(
-            objects_df,
-            latitude="lat",
-            longitude="lon",
-            zoom=zoom,
-            use_container_width=True,
+        # -------- Цвет по критичности --------
+        # crit_col уже рассчитан выше
+        def get_color(row):
+            if not crit_col:
+                return [0, 128, 255]  # синий по умолчанию
+
+            crit = str(row[crit_col]).lower()
+            if "high" in crit:
+                return [255, 0, 0]       # красный
+            elif "medium" in crit:
+                return [255, 165, 0]     # оранжевый
+            elif "low" in crit:
+                return [0, 200, 0]       # зелёный
+            else:
+                return [100, 149, 237]   # fallback
+
+        objects_df["color"] = objects_df.apply(get_color, axis=1)
+
+        # Центр карты
+        midpoint = (
+            float(objects_df["lat"].mean()),
+            float(objects_df["lon"].mean()),
         )
+
+        layer = pdk.Layer(
+            "ScatterplotLayer",
+            data=objects_df,
+            get_position='[lon, lat]',
+            get_fill_color='color',
+            get_radius=80,
+            pickable=True,
+        )
+
+        deck = pdk.Deck(
+            map_style="mapbox://styles/mapbox/dark-v10",
+            initial_view_state=pdk.ViewState(
+                latitude=midpoint[0],
+                longitude=midpoint[1],
+                zoom=zoom,
+                pitch=0,
+            ),
+            layers=[layer],
+            tooltip={
+                "html": "<b>{name}</b><br/>"
+                        "Тип: {type}<br/>"
+                        "Критичность: {criticality}",
+                "style": {"backgroundColor": "#111827", "color": "white"},
+            },
+        )
+
+        st.pydeck_chart(deck, use_container_width=True)
 
         # --------- Таблица + метрики ---------
         st.subheader(t("table_title"))
-        st.dataframe(objects_df.head(300), use_container_width=True)
+        st.dataframe(objects_df.drop(columns=["color"], errors="ignore").head(300),
+                     use_container_width=True)
 
         st.markdown(f"### {t('summary_title')}")
         c1, c2, c3 = st.columns(3)
