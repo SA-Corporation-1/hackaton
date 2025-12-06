@@ -460,79 +460,123 @@ def page_dashboard():
 
 
 def page_report():
-    st.title("GPT-отчёт по диагностике и рискам")
+    st.title("GPT-Отчёт по результатам диагностики")
 
-    # 1. Проверяем, что есть данные
+    # 1. Проверяем, что данные загружены
     if "diagnostics_df" not in st.session_state or "objects_df" not in st.session_state:
         st.warning("Сначала загрузите данные на странице «Импорт данных».")
         return
 
-    diagnostics = st.session_state["diagnostics_df"].copy()
+    # 2. Берём копии датафреймов
     objects = st.session_state["objects_df"].copy()
+    diagnostics = st.session_state["diagnostics_df"].copy()
 
     if diagnostics.empty or objects.empty:
-        st.warning("Данные загружены, но таблицы пустые.")
+        st.warning("Таблицы пустые. Загрузите корректные CSV.")
         return
 
-    # 2. Страхуемся, если коллеги ещё не сделали defect_found / ml_label
-    if "severity" in diagnostics.columns:
-        if "defect_found" not in diagnostics.columns:
+    # 3. ГАРАНТИРУЕМ НУЖНЫЕ КОЛОНКИ
+
+    # date → year
+    if "date" in diagnostics.columns:
+        diagnostics["date"] = pd.to_datetime(diagnostics["date"], errors="coerce")
+        diagnostics["year"] = diagnostics["date"].dt.year
+    else:
+        diagnostics["year"] = None
+
+    # defect_found: если нет — создаём из severity
+    if "defect_found" not in diagnostics.columns:
+        if "severity" in diagnostics.columns:
             diagnostics["defect_found"] = diagnostics["severity"].apply(
                 lambda x: 1 if str(x).lower() != "low" else 0
             )
-        if "ml_label" not in diagnostics.columns:
-            diagnostics["ml_label"] = diagnostics["severity"].astype(str).str.lower()
-    else:
-        if "defect_found" not in diagnostics.columns:
+        else:
             diagnostics["defect_found"] = 0
-        if "ml_label" not in diagnostics.columns:
+
+    # ml_label: если нет — делаем из severity
+    if "ml_label" not in diagnostics.columns:
+        if "severity" in diagnostics.columns:
+            diagnostics["ml_label"] = diagnostics["severity"].astype(str).str.lower()
+        else:
             diagnostics["ml_label"] = "unknown"
 
-    # 3. Считаем KPI
+    # 4. KPI
     total_inspections = len(diagnostics)
-    total_objects = objects["object_id"].nunique() if "object_id" in objects.columns else None
+    total_objects = objects["object_id"].nunique() if "object_id" in objects.columns else 0
     total_defects = int(diagnostics["defect_found"].sum())
 
-    crit_dist = (
-        diagnostics["ml_label"]
-        .value_counts()
-        .to_dict()
-        if "ml_label" in diagnostics.columns
-        else {}
-    )
+    # Методы контроля (только по дефектам)
+    if "method" in diagnostics.columns:
+        method_stats = (
+            diagnostics[diagnostics["defect_found"] == 1]
+            .groupby("method")["defect_found"]
+            .sum()
+            .sort_values(ascending=False)
+            .to_dict()
+        )
+    else:
+        method_stats = {}
 
-    # топ проблемных объектов
+    # Критичность
+    if "ml_label" in diagnostics.columns:
+        crit_stats = diagnostics["ml_label"].value_counts().to_dict()
+    else:
+        crit_stats = {}
+
+    # Динамика по годам
+    if "year" in diagnostics.columns and diagnostics["year"].notna().any():
+        year_stats = (
+            diagnostics.dropna(subset=["year"])
+            .groupby("year")["object_id"]
+            .count()
+            .sort_index()
+            .to_dict()
+        )
+    else:
+        year_stats = {}
+
+    # Топ-объекты
     if "object_id" in diagnostics.columns:
-        defect_rows = diagnostics[diagnostics["defect_found"] == 1]
-        top_objects = (
-            defect_rows.groupby("object_id")
-            .size()
+        top_objects_series = (
+            diagnostics[diagnostics["defect_found"] == 1]
+            .groupby("object_id")["defect_found"]
+            .sum()
             .sort_values(ascending=False)
             .head(5)
         )
+        top_objects = top_objects_series.to_dict()
     else:
-        top_objects = pd.Series(dtype=int)
+        top_objects = {}
 
-    st.subheader("Краткая сводка по данным")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Обследований", total_inspections)
-    with col2:
-        st.metric("Объектов", total_objects if total_objects is not None else "—")
-    with col3:
-        st.metric("Выявлено дефектов", total_defects)
+    # 5. Показываем сводку на экране
+    st.subheader("Сводная информация (данные дашборда)")
+    st.write("Обследований:", total_inspections)
+    st.write("Объектов:", total_objects)
+    st.write("Дефектов:", total_defects)
+    st.write("Методы (дефекты по методам):", method_stats)
+    st.write("Распределение по критичности:", crit_stats)
+    st.write("Динамика по годам:", year_stats)
+    st.write("Топ проблемных объектов:", top_objects)
 
-    if not top_objects.empty:
-        st.markdown("Топ-5 объектов по количеству дефектов:")
-        st.dataframe(top_objects.rename("defects"), use_container_width=True)
-    else:
-        st.info("В данных не найдено объектов с дефектами (defect_found == 1).")
+    # 6. GPT-отчёт
+    if st.button("Сформировать отчёт"):
+        with st.spinner("Генерация полного инженерного отчёта..."):
 
-    st.markdown("---")
+            prompt = f"""
+Ты — инженер по промышленной безопасности. 
+Ниже данные технического дашборда IntegrityOS, который анализирует объекты инфраструктуры.
 
-    if st.button("Сформировать GPT-отчёт"):
-        with st.spinner("GPT анализирует данные..."):
-            st.info("GPT временно недоступен. Отчёт не сформирован.")
+Проанализируй эти данные как эксперт и составь:
+
+1) Общую оценку ситуации  
+2) Краткий анализ дефектов  
+3) Какие методы контроля наиболее эффективны  
+4) Какие объекты наиболее проблемные и почему  
+5) Что нужно сделать в первую очередь (приоритетный план работы)  
+6) Риски, если ничего не делать  
+7) Профессиональные рекомендации инженера  
+
+ДАННЫЕ ДАШБОРДА:
 
 
 # ---------- МЕНЮ СТРАНИЦ ----------
