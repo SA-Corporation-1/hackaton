@@ -50,44 +50,53 @@ def import_objects_to_db(objects_df: pd.DataFrame):
 
 
 def import_diagnostics_to_db(diagnostics_df: pd.DataFrame):
-    """Сохраняем данные Diagnostics.csv в таблицы inspections и defects."""
+    """Сохраняем Diagnostics_sample.csv (object_id, method, severity, date, description)
+    в таблицы inspections и defects.
+    """
     session = SessionLocal()
     try:
-        for _, row in diagnostics_df.iterrows():
+        for idx, row in diagnostics_df.iterrows():
             try:
+                # генерируем diag_id по порядку (1,2,3,...)
+                diag_id = int(idx) + 1
+
+                # дата
                 date_raw = row.get("date", None)
                 date_parsed = pd.to_datetime(date_raw, errors="coerce")
                 if pd.isna(date_parsed):
                     continue
 
-                defect_raw = str(row.get("defect_found", "")).lower()
-                defect_found = defect_raw in ("1", "true", "yes", "да")
+                # severity -> defect_found + ml_label
+                severity_raw = str(row.get("severity", "")).strip()
+                severity_lower = severity_raw.lower()
+                defect_found = severity_lower != "low"  # всё, что не Low — считаем дефектом
 
                 insp = Inspection(
-                    id=int(row["diag_id"]),
+                    id=diag_id,
                     object_id=int(row["object_id"]),
                     date=date_parsed.date(),
                     method=str(row.get("method", "")),
-                    temperature=float(row["temperature"]) if "temperature" in row and pd.notna(row["temperature"]) else None,
-                    humidity=float(row["humidity"]) if "humidity" in row and pd.notna(row["humidity"]) else None,
-                    illumination=float(row["illumination"]) if "illumination" in row and pd.notna(row["illumination"]) else None,
+                    temperature=None,
+                    humidity=None,
+                    illumination=None,
                     defect_found=defect_found,
-                    defect_descr=str(row.get("defect_description", "")),
-                    quality_grade=str(row.get("quality_grade", "")),
-                    param1=float(row["param1"]) if "param1" in row and pd.notna(row["param1"]) else None,
-                    param2=float(row["param2"]) if "param2" in row and pd.notna(row["param2"]) else None,
-                    param3=float(row["param3"]) if "param3" in row and pd.notna(row["param3"]) else None,
-                    ml_label=str(row.get("ml_label", "")),
+                    defect_descr=str(row.get("description", "")),
+                    quality_grade=None,
+                    param1=None,
+                    param2=None,
+                    param3=None,
+                    ml_label=severity_lower,  # high / medium / low
                 )
                 session.merge(insp)
 
+                # если есть дефект — создаём запись в таблице defects
                 if defect_found:
                     defect = Defect(
                         inspection_id=insp.id,
-                        depth=insp.param1,
-                        length=insp.param2,
-                        width=insp.param3,
-                        severity=insp.ml_label,
+                        depth=None,
+                        length=None,
+                        width=None,
+                        severity=severity_lower,
                         description=insp.defect_descr,
                     )
                     session.add(defect)
@@ -99,6 +108,7 @@ def import_diagnostics_to_db(diagnostics_df: pd.DataFrame):
         session.commit()
     finally:
         session.close()
+
 
 
 def debug_db_panel():
