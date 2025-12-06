@@ -34,6 +34,13 @@ if "processed_df" not in st.session_state:
 
 UI_TEXTS = {
     "ru": {
+        "menu_select_page": "Выберите страницу",
+        "menu_import": "Импорт данных",
+        "menu_map": "Карта",
+        "menu_defects": "Дефекты",
+        "menu_history": "История объекта",
+        "menu_dashboard": "Дашборд",
+        "menu_report": "Отчёт",
         "lang_name": "Русский",
         "import_title": "Импорт данных",
         "upload_hint": "Загрузите файлы Objects.csv и Diagnostics.csv",
@@ -59,6 +66,13 @@ UI_TEXTS = {
         "no_objects_for_filters": "По выбранным фильтрам нет объектов.",
     },
     "kk": {
+        "menu_select_page": "Бетті таңдаңыз",
+        "menu_import": "Деректерді импорттау",
+        "menu_map": "Карта",
+        "menu_defects": "Ақаулар",
+        "menu_history": "Объект тарихы",
+        "menu_dashboard": "Дашборд",
+        "menu_report": "Отчет",
         "lang_name": "Қазақша",
         "import_title": "Деректерді импорттау",
         "upload_hint": "Objects.csv және Diagnostics.csv файлдарын жүктеңіз",
@@ -84,6 +98,13 @@ UI_TEXTS = {
         "no_objects_for_filters": "Таңдалған сүзгілер бойынша объектілер жоқ.",
     },
     "en": {
+        "menu_select_page": "Select page",
+        "menu_import": "Data import",
+        "menu_map": "Map",
+        "menu_defects": "Defects",
+        "menu_history": "Object history",
+        "menu_dashboard": "Dashboard",
+        "menu_report": "Report",
         "lang_name": "English",
         "import_title": "Data import",
         "upload_hint": "Upload Objects.csv and Diagnostics.csv files",
@@ -785,28 +806,28 @@ lang_code = st.sidebar.selectbox(
 )
 st.session_state.ui_lang = lang_code
 
+page = st.sidebar.radio(
+    t("menu_select_page"),
+    [
+        t("menu_import"),
+        t("menu_map"),
+        t("menu_defects"),
+        t("menu_history"),
+        t("menu_dashboard"),
+        t("menu_report"),
+    ],
+)
+
+# роутинг по страницам
 if page == t("menu_import"):
     page_import()
 elif page == t("menu_map"):
     page_map()
-elif page == t("menu_history"):
-    page_history()
 elif page == t("menu_defects"):
     page_defects()
+elif page == t("menu_history"):
+    page_history()
 elif page == t("menu_dashboard"):
     page_dashboard()
 elif page == t("menu_report"):
-    page_report()
-
-if page == "Импорт данных":
-    page_import()
-elif page == "Карта":
-    page_map()
-elif page == "История объекта":      
-    page_history()
-elif page == "Дефекты":
-    page_defects()
-elif page == "Дашборд":
-    page_dashboard()
-elif page == "Отчёт":
     page_report()
