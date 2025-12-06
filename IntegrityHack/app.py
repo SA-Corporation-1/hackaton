@@ -171,104 +171,177 @@ def page_import():
 
 
 def page_map():
-    st.title("Карта объектов")
+    st.title("Карта объектов / Объектілер картасы")
 
     if st.session_state.objects_df is None:
-        st.warning("Сначала загрузите данные на странице 'Импорт данных'.")
+        st.warning("Алдымен 'Импорт данных' бетінде файлдарды жүктеңіз.")
         return
 
     objects_df = st.session_state.objects_df.copy()
 
-    # Проверим обязательные колонки
+    # Міндетті колонкалар
     required_cols = {"lat", "lon"}
     if not required_cols.issubset(objects_df.columns):
-        st.error(f"В Objects.csv должны быть колонки: {required_cols}")
+        st.error(f"Objects.csv файлыңда міндетті түрде {required_cols} колонкалары болуы керек.")
         st.dataframe(objects_df.head())
         return
 
-    st.subheader("Фильтры")
+    # --------- ЛЕЙАУТ: сол жақта фильтр, оң жақта карта + таблица ---------
+    filters_col, map_col = st.columns([1, 3])
 
-    # Фильтр по типу объекта (если есть колонка type)
-    if "type" in objects_df.columns:
-        all_types = sorted(objects_df["type"].dropna().unique())
-        selected_types = st.multiselect(
-            "Тип объекта",
-            options=all_types,
-            default=all_types,
+    with filters_col:
+        st.subheader("Фильтры / Сүзгілер")
+
+        # Тип объекта / Объект түрі
+        type_col = None
+        if "type" in objects_df.columns:
+            type_col = "type"
+        elif "object_type" in objects_df.columns:
+            type_col = "object_type"
+
+        if type_col:
+            all_types = sorted(objects_df[type_col].dropna().unique())
+            selected_types = st.multiselect(
+                "Тип объекта / Объект түрі",
+                options=all_types,
+                default=all_types,
+            )
+            if selected_types:
+                objects_df = objects_df[objects_df[type_col].isin(selected_types)]
+
+        # Критичность / Критикалылық
+        crit_col = None
+        if "criticality" in objects_df.columns:
+            crit_col = "criticality"
+        elif "ml_label" in objects_df.columns:
+            crit_col = "ml_label"
+
+        if crit_col:
+            all_crit = sorted(objects_df[crit_col].dropna().unique())
+            selected_crit = st.multiselect(
+                "Критичность / Критикалылық",
+                options=all_crit,
+                default=all_crit,
+            )
+            if selected_crit:
+                objects_df = objects_df[objects_df[crit_col].isin(selected_crit)]
+
+            st.markdown("**Быстрый выбор / Жылдам таңдау:**")
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                if st.button("Только High"):
+                    objects_df = objects_df[objects_df[crit_col].astype(str).str.lower() == "high"]
+            with c2:
+                if st.button("High + Medium"):
+                    objects_df = objects_df[
+                        objects_df[crit_col].astype(str).str.lower().isin(["high", "medium"])
+                    ]
+            with c3:
+                if st.button("Все"):
+                    pass  # фильтры уже выбраны сверху
+
+        st.markdown("---")
+        st.caption(
+            "Инженер фильтр арқылы тек керек объектілерді таңдап, "
+            "картадан және кестеден соларды ғана көре алады."
         )
-        if selected_types:
-            objects_df = objects_df[objects_df["type"].isin(selected_types)]
-
-    # Фильтр по критичности (если есть колонка criticality)
-    if "criticality" in objects_df.columns:
-        all_crit = sorted(objects_df["criticality"].dropna().unique())
-        selected_crit = st.multiselect(
-            "Критичность",
-            options=all_crit,
-            default=all_crit,
-        )
-        if selected_crit:
-            objects_df = objects_df[objects_df["criticality"].isin(selected_crit)]
-
-    st.markdown("---")
 
     if objects_df.empty:
-        st.warning("По выбранным фильтрам нет объектов.")
+        st.warning("Таңдалған сүзгілер бойынша объектілер жоқ.")
         return
 
-    st.subheader("Карта")
+    with map_col:
+        st.subheader("Интерактивная карта")
 
-    # Базовый центр карты — среднее по координатам
-    midpoint = (
-        objects_df["lat"].mean(),
-        objects_df["lon"].mean(),
-    )
-
-    # Цвета для критичности (если нет criticality, будет один цвет)
-    def get_color(row):
-        if "criticality" not in objects_df.columns:
-            return [0, 128, 255]  # синий
-        crit = str(row["criticality"]).lower()
-        if "high" in crit or "выс" in crit:
-            return [255, 0, 0]      # красный
-        elif "medium" in crit or "сред" in crit:
-            return [255, 165, 0]    # оранжевый
-        else:
-            return [0, 200, 0]      # зелёный
-
-    objects_df["color"] = objects_df.apply(get_color, axis=1)
-
-    layer = pdk.Layer(
-        "ScatterplotLayer",
-        data=objects_df,
-        get_position='[lon, lat]',
-        get_fill_color='color',
-        get_radius=50,
-        pickable=True,
-        radius_scale=5,
-    )
-
-    tooltip = {
-        "html": "<b>{name}</b><br/>Тип: {type}<br/>Критичность: {criticality}",
-        "style": {"backgroundColor": "steelblue", "color": "white"}
-    }
-
-    st.pydeck_chart(
-        pdk.Deck(
-            map_style="mapbox://styles/mapbox/light-v9",
-            initial_view_state=pdk.ViewState(
-                latitude=midpoint[0],
-                longitude=midpoint[1],
-                zoom=10,
-                pitch=0,
-            ),
-            layers=[layer],
-            tooltip=tooltip,
+        # Центр карты
+        midpoint = (
+            float(objects_df["lat"].mean()),
+            float(objects_df["lon"].mean()),
         )
-    )
 
-    st.subheader("Таблица объектов")
-    st.dataframe(objects_df.head(200))
+        # Цвет по критичности
+        def get_color(row):
+            if not crit_col:
+                return [0, 128, 255]  # синий по умолчанию
+            crit = str(row[crit_col]).lower()
+            if "high" in crit or "выс" in crit:
+                return [255, 0, 0]      # красный
+            elif "medium" in crit or "сред" in crit:
+                return [255, 165, 0]    # оранжевый
+            else:
+                return [0, 200, 0]      # зелёный
+
+        objects_df["color"] = objects_df.apply(get_color, axis=1)
+
+        # Название объекта для tooltip
+        name_col = None
+        if "name" in objects_df.columns:
+            name_col = "name"
+        elif "object_name" in objects_df.columns:
+            name_col = "object_name"
+
+        # если колонки нет – создадим пустую
+        if not name_col:
+            objects_df["__name"] = objects_df.get("object_id", "")
+            name_col = "__name"
+
+        layer = pdk.Layer(
+            "ScatterplotLayer",
+            data=objects_df,
+            get_position='[lon, lat]',
+            get_fill_color='color',
+            get_radius=80,
+            pickable=True,
+        )
+
+        tooltip = {
+            "html": """
+            <b>{""" + name_col + """}</b><br/>
+            Тип: {""" + (type_col or "") + """}<br/>
+            Критичность: {""" + (crit_col or "") + """}<br/>
+            ID: {object_id}
+            """,
+            "style": {"backgroundColor": "#111827", "color": "white"}
+        }
+
+        st.pydeck_chart(
+            pdk.Deck(
+                map_style="mapbox://styles/mapbox/dark-v10",
+                initial_view_state=pdk.ViewState(
+                    latitude=midpoint[0],
+                    longitude=midpoint[1],
+                    zoom=10,
+                    pitch=0,
+                ),
+                layers=[layer],
+                tooltip=tooltip,
+            )
+        )
+
+        st.subheader("Таблица объектов / Объектілер кестесі")
+        cols_to_show = [col for col in objects_df.columns if col not in ["color"]]
+        st.dataframe(objects_df[cols_to_show].head(300))
+
+        st.markdown("### Қысқаша статистика")
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.metric("Объектілер саны", len(objects_df))
+        if crit_col:
+            with c2:
+                st.metric(
+                    "High саны",
+                    int(
+                        objects_df[crit_col].astype(str).str.lower().eq("high").sum()
+                    ),
+                )
+            with c3:
+                st.metric(
+                    "Medium саны",
+                    int(
+                        objects_df[crit_col].astype(str).str.lower().eq("medium").sum()
+                    ),
+                )
+
 
 
 def page_defects():
