@@ -35,9 +35,12 @@ if "processed_df" not in st.session_state:
 UI_TEXTS = {
     "ru": {
         "lang_name": "Русский",
+        "import_title": "Импорт данных",
+        "upload_hint": "Загрузите файлы Objects.csv и Diagnostics.csv",
+        "objects_label": "Objects.csv",
+        "diag_label": "Diagnostics.csv",
+        "load_btn": "Загрузить и обработать",
         "map_title": "Карта объектов",
-        "import_first": "Сначала загрузите данные на странице «Импорт данных».",
-        "no_latlon": "В Objects.csv обязательно должны быть колонки 'lat' и 'lon'.",
         "filters_title": "Фильтры",
         "object_type": "Тип объекта",
         "criticality": "Критичность",
@@ -45,19 +48,24 @@ UI_TEXTS = {
         "only_high": "Только High",
         "high_medium": "High + Medium",
         "all": "Все",
-        "no_objects_for_filters": "По выбранным фильтрам нет объектов.",
         "map_subtitle": "Интерактивная карта",
         "table_title": "Таблица объектов",
         "summary_title": "Краткая статистика",
         "objects_metric": "Количество объектов",
         "high_metric": "High объектов",
         "medium_metric": "Medium объектов",
+        "import_first": "Сначала загрузите данные на странице «Импорт данных».",
+        "no_latlon": "В Objects.csv обязательно должны быть колонки 'lat' и 'lon'.",
+        "no_objects_for_filters": "По выбранным фильтрам нет объектов.",
     },
     "kk": {
         "lang_name": "Қазақша",
+        "import_title": "Деректерді импорттау",
+        "upload_hint": "Objects.csv және Diagnostics.csv файлдарын жүктеңіз",
+        "objects_label": "Objects.csv",
+        "diag_label": "Diagnostics.csv",
+        "load_btn": "Жүктеу және өңдеу",
         "map_title": "Объектілер картасы",
-        "import_first": "Алдымен «Импорт данных» бетінде деректерді жүктеңіз.",
-        "no_latlon": "Objects.csv ішінде міндетті түрде 'lat' және 'lon' колонкалары болуы керек.",
         "filters_title": "Сүзгілер",
         "object_type": "Объект түрі",
         "criticality": "Критикалылық",
@@ -65,19 +73,24 @@ UI_TEXTS = {
         "only_high": "Тек High",
         "high_medium": "High + Medium",
         "all": "Барлығы",
-        "no_objects_for_filters": "Таңдалған сүзгілер бойынша объектілер жоқ.",
         "map_subtitle": "Интерактивті карта",
         "table_title": "Объектілер кестесі",
         "summary_title": "Қысқаша статистика",
         "objects_metric": "Объектілер саны",
         "high_metric": "High объектілер",
         "medium_metric": "Medium объектілер",
+        "import_first": "Алдымен «Импорт данных» бетінде деректерді жүктеңіз.",
+        "no_latlon": "Objects.csv ішінде міндетті түрде 'lat' және 'lon' колонкалары болуы керек.",
+        "no_objects_for_filters": "Таңдалған сүзгілер бойынша объектілер жоқ.",
     },
     "en": {
         "lang_name": "English",
+        "import_title": "Data import",
+        "upload_hint": "Upload Objects.csv and Diagnostics.csv files",
+        "objects_label": "Objects.csv",
+        "diag_label": "Diagnostics.csv",
+        "load_btn": "Upload & process",
         "map_title": "Objects map",
-        "import_first": "Please upload data on the 'Import data' page first.",
-        "no_latlon": "Objects.csv must contain 'lat' and 'lon' columns.",
         "filters_title": "Filters",
         "object_type": "Object type",
         "criticality": "Criticality",
@@ -85,13 +98,15 @@ UI_TEXTS = {
         "only_high": "Only High",
         "high_medium": "High + Medium",
         "all": "All",
-        "no_objects_for_filters": "No objects for the selected filters.",
         "map_subtitle": "Interactive map",
         "table_title": "Objects table",
         "summary_title": "Summary",
         "objects_metric": "Objects count",
         "high_metric": "High objects",
         "medium_metric": "Medium objects",
+        "import_first": "Please upload data on the 'Import data' page first.",
+        "no_latlon": "Objects.csv must contain 'lat' and 'lon' columns.",
+        "no_objects_for_filters": "No objects for the selected filters.",
     },
 }
 
@@ -101,7 +116,7 @@ if "ui_lang" not in st.session_state:
 
 
 def t(key: str) -> str:
-    """Берём строку для текущего языка, если нет — ключ."""
+    """Берём строку для текущего языка, если нет — возвращаем ключ."""
     lang = st.session_state.get("ui_lang", "ru")
     return UI_TEXTS.get(lang, UI_TEXTS["ru"]).get(key, key)
 
@@ -158,16 +173,24 @@ client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 
 # ---------- ФУНКЦИИ ДЛЯ БЛОКОВ ----------
-
 def page_import():
-    st.title("Импорт данных")
+    st.title(t("import_title"))
 
-    st.write("Загрузите файлы Objects.csv и Diagnostics.csv")
+    st.write(t("upload_hint"))
 
-    objects_file = st.file_uploader("Objects.csv", type=["csv"], key="objects_uploader")
-    diagnostics_file = st.file_uploader("Diagnostics.csv", type=["csv"], key="diag_uploader")
+    objects_file = st.file_uploader(
+        t("objects_label"),
+        type=["csv"],
+        key="objects_uploader",
+    )
+    diagnostics_file = st.file_uploader(
+        t("diag_label"),
+        type=["csv"],
+        key="diag_uploader",
+    )
 
-    if st.button("Загрузить и обработать"):
+    if st.button(t("load_btn")):
+
         if objects_file is None or diagnostics_file is None:
             st.error("Пожалуйста, загрузите оба файла.")
             return
@@ -738,43 +761,16 @@ def page_report():
 
             report = response.output_text
 
-            # Показ и HTML-версия
-            st.subheader("Готовый GPT-Отчёт")
-            st.markdown(report)
+        st.subheader("Готовый GPT-Отчёт")
+        st.markdown(report)
 
-            html_text = report.strip()
-            html_text = html_text.replace("\n\n", "</p><p>")
-            html_text = html_text.replace("\n", "<br>")
+        st.download_button(
+            "Скачать отчёт",
+            report,
+            "integrity_gpt_report.pdf",
+            "text/plain"
+        )
 
-            html_report = f"""
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>IntegrityOS – GPT-отчёт</title>
-    <style>
-        body {{
-            font-family: Arial, sans-serif;
-            margin: 30px;
-            line-height: 1.6;
-            font-size: 16px;
-        }}
-        p {{
-            margin-bottom: 15px;
-        }}
-    </style>
-</head>
-<body>
-<p>{html_text}</p>
-</body>
-</html>
-"""
-
-            st.download_button(
-                "Скачать отчёт (HTML)",
-                html_report,
-                "integrity_gpt_report.html",
-                "text/html"
-            )
 
 # ---------- МЕНЮ СТРАНИЦ ----------
 
@@ -783,25 +779,24 @@ st.sidebar.title("IntegrityOS – Demo")
 # выбор языка интерфейса (по умолчанию RU)
 lang_code = st.sidebar.selectbox(
     "Язык интерфейса",
-    options=["ru", "kk", "en"],
+    ["ru", "kk", "en"],
     format_func=lambda code: UI_TEXTS[code]["lang_name"],
     index=["ru", "kk", "en"].index(st.session_state.ui_lang),
 )
 st.session_state.ui_lang = lang_code
 
-page = st.sidebar.radio(
-    "Выберите страницу",
-    [
-        "Импорт данных",
-        "Карта",
-        "Дефекты",
-        "История объекта",
-        "Дашборд",
-        "Отчёт",
-    ],
-)
-
-
+if page == t("menu_import"):
+    page_import()
+elif page == t("menu_map"):
+    page_map()
+elif page == t("menu_history"):
+    page_history()
+elif page == t("menu_defects"):
+    page_defects()
+elif page == t("menu_dashboard"):
+    page_dashboard()
+elif page == t("menu_report"):
+    page_report()
 
 if page == "Импорт данных":
     page_import()
