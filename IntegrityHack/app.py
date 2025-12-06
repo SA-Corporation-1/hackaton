@@ -1,10 +1,10 @@
-from utils.db import init_db
-init_db()
 import streamlit as st
 import pandas as pd
 import pydeck as pdk
 import plotly.express as px
 from openai import OpenAI
+from utils.db import init_db
+init_db()
 # для карты
 
 # TODO: потом подключите свои утилиты
