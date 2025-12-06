@@ -34,6 +34,7 @@ if "processed_df" not in st.session_state:
 
 UI_TEXTS = {
     "ru": {
+        "upload_both": "Пожалуйста, загрузите оба файла.",
         "menu_select_page": "Выберите страницу",
         "menu_import": "Импорт данных",
         "menu_map": "Карта",
