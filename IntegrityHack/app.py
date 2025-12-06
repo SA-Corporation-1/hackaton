@@ -518,121 +518,155 @@ def page_history():
 
 
 def page_dashboard():
-    st.title("Дашборд диагностики объектов")
+    st.title("Дашборд диагностических данных")
 
-    # проверяем наличие данных
-    if "objects_df" not in st.session_state or "diagnostics_df" not in st.session_state:
+    # Проверяем, что данные загружены
+    if "diagnostics_df" not in st.session_state or "objects_df" not in st.session_state:
         st.warning("Сначала загрузите данные на странице «Импорт данных».")
         return
 
-    objects = st.session_state["objects_df"].copy()
     diagnostics = st.session_state["diagnostics_df"].copy()
+    objects = st.session_state["objects_df"].copy()
 
-    if objects.empty or diagnostics.empty:
-        st.warning("Таблицы пустые. Проверьте загрузку CSV.")
+    if diagnostics.empty or objects.empty:
+        st.warning("Недостаточно данных для отображения дашборда.")
         return
 
-    # дата → год
+    # Гарантируем необходимые поля
     if "date" in diagnostics.columns:
         diagnostics["date"] = pd.to_datetime(diagnostics["date"], errors="coerce")
         diagnostics["year"] = diagnostics["date"].dt.year
     else:
         diagnostics["year"] = None
 
-    # defect_found
-    if "defect_found" not in diagnostics.columns:
-        if "severity" in diagnostics.columns:
-            diagnostics["defect_found"] = diagnostics["severity"].apply(
-                lambda x: 1 if str(x).lower() != "low" else 0
-            )
-        else:
-            diagnostics["defect_found"] = 0
-
-    # ml_label
-    if "ml_label" not in diagnostics.columns:
-        if "severity" in diagnostics.columns:
-            diagnostics["ml_label"] = diagnostics["severity"].astype(str).str.lower()
-        else:
-            diagnostics["ml_label"] = "unknown"
-
-    # 3. ФИЛЬТРЫ
-    st.sidebar.subheader("Фильтры дашборда")
-
-    # Год
-    years = sorted(diagnostics["year"].dropna().unique().tolist())
-    year_filter = st.sidebar.selectbox(
-        "Год обследования", ["Все годы"] + [str(y) for y in years]
-    )
-
-    # Метод контроля
-    methods = sorted(diagnostics["method"].dropna().unique().tolist()) if "method" in diagnostics.columns else []
-    method_filter = st.sidebar.selectbox(
-        "Метод контроля", ["Все методы"] + methods
-    )
-
-    # Критичность (по ml_label)
-    crits = sorted(diagnostics["ml_label"].dropna().unique().tolist())
-    crit_filter = st.sidebar.selectbox(
-        "Критичность (ml_label)", ["Все уровни"] + crits
-    )
-
-    # Применяем фильтры
-    filtered = diagnostics.copy()
-
-    if year_filter != "Все годы":
-        filtered = filtered[filtered["year"] == int(year_filter)]
-
-    if method_filter != "Все методы" and "method" in filtered.columns:
-        filtered = filtered[filtered["method"] == method_filter]
-
-    if crit_filter != "Все уровни":
-        filtered = filtered[filtered["ml_label"] == crit_filter]
-
-    # 4. KPI
-    st.markdown("### Сводные показатели (с учётом фильтров)")
-
-    total_inspections = len(filtered)
-    total_objects = filtered["object_id"].nunique() if "object_id" in filtered.columns else 0
-    total_defects = int(filtered["defect_found"].sum())
-
-    if "criticality" in objects.columns:
-        high_crit_objects = (
-            objects["criticality"].astype(str).str.lower().eq("high").sum()
-        )
+    if "severity" in diagnostics.columns:
+        diagnostics["severity"] = diagnostics["severity"].astype(str).str.capitalize()
     else:
-        if "object_id" in filtered.columns:
-            high_ids = filtered.loc[filtered["ml_label"] == "high", "object_id"].dropna().unique()
-            high_crit_objects = len(high_ids)
-        else:
-            high_crit_objects = 0
+        diagnostics["severity"] = "Unknown"
 
+    if "defect_found" not in diagnostics.columns:
+        diagnostics["defect_found"] = diagnostics["severity"].apply(
+            lambda x: 1 if x.lower() != "low" else 0
+        )
+
+    st.markdown("## KPI — ключевые показатели системы")
     col1, col2, col3, col4 = st.columns(4)
+
+    total_inspections = len(diagnostics)
+    total_objects = objects["object_id"].nunique()
+    total_defects = int(diagnostics["defect_found"].sum())
+    total_high = (diagnostics["severity"].str.lower() == "high").sum()
+
     col1.metric("Обследований", total_inspections)
-    col2.metric("Объектов", total_objects)
-    col3.metric("Дефектов", total_defects)
-    col4.metric("Объектов с высокой критичностью", high_crit_objects)
+    col2.metric("Уникальных объектов", total_objects)
+    col3.metric("Найдено дефектов", total_defects)
+    col4.metric("Высокая критичность", total_high)
 
     st.markdown("---")
 
-    # 5. Бар-чарт: дефекты по методам
+    # -------------------------------
+    # 1. ДЕФЕКТЫ ПО МЕТОДАМ КОНТРОЛЯ
+    # -------------------------------
     st.subheader("Дефекты по методам контроля")
-    defects = filtered[filtered["defect_found"] == 1]
 
-    if "method" in filtered.columns and not defects.empty:
+    if "method" in diagnostics.columns:
         df_methods = (
-            defects.groupby("method")["defect_found"].sum().reset_index()
+            diagnostics[diagnostics["defect_found"] == 1]
+            .groupby("method")["defect_found"]
+            .sum()
+            .reset_index()
         )
-        fig = px.bar(
-            df_methods,
-            x="method",
-            y="defect_found",
-            labels={"method": "Метод контроля", "defect_found": "Количество дефектов"},
-            title="Количество дефектов по методам контроля",
-        )
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.info("Нет данных о дефектах для построения графика.")
 
+        if len(df_methods) > 0:
+            fig_methods = px.bar(
+                df_methods,
+                x="method",
+                y="defect_found",
+                title="Количество дефектов по методам контроля",
+                color="method",
+            )
+            st.plotly_chart(fig_methods, use_container_width=True)
+        else:
+            st.info("Нет данных о дефектах для анализа по методам.")
+    else:
+        st.warning("В данных отсутствует колонка 'method'.")
+
+    st.markdown("---")
+
+    # -------------------------------
+    # 2. РАСПРЕДЕЛЕНИЕ ПО КРИТИЧНОСТИ
+    # -------------------------------
+    st.subheader("Распределение дефектов по критичности")
+
+    crit_df = diagnostics["severity"].value_counts().reset_index()
+    crit_df.columns = ["severity", "count"]
+
+    if len(crit_df) > 0:
+        fig_crit = px.bar(
+            crit_df,
+            x="severity",
+            y="count",
+            title="Распределение дефектов по критичности",
+            color="severity",
+        )
+        st.plotly_chart(fig_crit, use_container_width=True)
+    else:
+        st.info("Нет данных о критичности.")
+
+    st.markdown("---")
+
+    # -------------------------------
+    # 3. ДИНАМИКА ОБСЛЕДОВАНИЙ ПО ГОДАМ
+    # -------------------------------
+    st.subheader("Динамика обследований по годам")
+
+    if diagnostics["year"].notna().any():
+        df_year = (
+            diagnostics.dropna(subset=["year"])
+            .groupby("year")["object_id"]
+            .count()
+            .reset_index()
+        )
+
+        fig_years = px.line(
+            df_year,
+            x="year",
+            y="object_id",
+            markers=True,
+            title="Количество обследований по годам"
+        )
+        st.plotly_chart(fig_years, use_container_width=True)
+    else:
+        st.info("Нет данных по годам.")
+
+    st.markdown("---")
+
+
+# -------------------------------
+    # 4. ТОП-5 ОБЪЕКТОВ ПО ДЕФЕКТАМ
+    # -------------------------------
+    st.subheader("ТОП-5 объектов по количеству дефектов")
+
+    if "object_id" in diagnostics.columns:
+        df_top = (
+            diagnostics[diagnostics["defect_found"] == 1]
+            .groupby("object_id")["defect_found"]
+            .sum()
+            .reset_index()
+            .sort_values("defect_found", ascending=False)
+            .head(5)
+        )
+
+        fig_top = px.bar(
+            df_top,
+            x="object_id",
+            y="defect_found",
+            title="Объекты с наибольшим количеством дефектов",
+            color="object_id",
+        )
+        st.plotly_chart(fig_top, use_container_width=True)
+    else:
+        st.warning("В данных отсутствует колонка object_id.")
 
 def page_report():
     st.title("GPT-Отчёт по результатам диагностики")
