@@ -462,9 +462,6 @@ page = st.sidebar.radio(
         "Отчёт",
     ],
 )
-
-if page == "Импорт данных":
-    page_import()
 elif page == "Карта":
     page_map()
 elif page == "Дефекты":
