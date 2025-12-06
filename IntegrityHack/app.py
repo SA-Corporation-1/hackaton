@@ -361,14 +361,14 @@ def page_map():
             if selected_types:
                 objects_df = objects_df[objects_df[type_col].isin(selected_types)]
 
-        # Критичность (criticality или ml_label)
+               # Критичность (criticality или ml_label)
         crit_col = None
         if "criticality" in objects_df.columns:
             crit_col = "criticality"
         elif "ml_label" in objects_df.columns:
             crit_col = "ml_label"
 
-               if crit_col:
+        if crit_col:
             all_crit = sorted(objects_df[crit_col].dropna().unique())
 
             def crit_format(v):
@@ -381,9 +381,9 @@ def page_map():
                 default=all_crit,
                 format_func=crit_format,
             )
-            if selected_crit:
-                objects_df = objects_df[objects_df[crit_col].isin(selected_crit)]
 
+        if selected_crit:
+                objects_df = objects_df[objects_df[crit_col].isin(selected_crit)]
 
             st.markdown(f"**{t('quick_select')}:**")
             c1, c2, c3 = st.columns(3)
@@ -399,7 +399,8 @@ def page_map():
                     ]
             with c3:
                 if st.button(t("all")):
-                    pass  # multiselect уже содержит все
+                    pass
+
 
     if objects_df.empty:
         st.warning(t("no_objects_for_filters"))
