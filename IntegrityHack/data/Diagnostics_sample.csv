@@ -10,4 +10,4 @@ object_id,method,severity,date,description
 105,MT,Medium,2024-04-15,Magnetic indications at base
 106,VT,Medium,2024-01-05,Corrosion at pipe support
 106,UT,High,2024-06-07,Significant wall loss
-107,VT,Low,2024-02-19,Insulation damage no metal los
+107,VT,Low,2024-02-19,Insulation damage no metal loss
