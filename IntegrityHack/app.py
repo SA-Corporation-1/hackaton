@@ -145,6 +145,31 @@ def t(key: str) -> str:
 
 # ---------- ФУНКЦИИ ДЛЯ РАБОТЫ С БАЗОЙ ДАННЫХ ----------
 
+def import_objects_to_db(objects_df: pd.DataFrame):
+    """Сохраняем данные Objects.csv в таблицу objects."""
+    session = SessionLocal()
+    try:
+        for _, row in objects_df.iterrows():
+            try:
+                obj = Object(
+                    id=int(row["object_id"]),
+                    object_name=str(row.get("object_name", "")),
+                    object_type=str(row.get("object_type", "")),
+                    pipeline=str(row.get("pipeline", "")),
+                    lat=float(row["lat"]) if "lat" in row and pd.notna(row["lat"]) else None,
+                    lon=float(row["lon"]) if "lon" in row and pd.notna(row["lon"]) else None,
+                    year=int(row["year"]) if "year" in row and pd.notna(row["year"]) else None,
+                    material=str(row.get("material", "")),
+                )
+                session.merge(obj)   # upsert
+            except Exception as e:
+                print("Ошибка при импорте объекта:", e)
+                continue
+        session.commit()
+    finally:
+        session.close()
+
+
 def import_diagnostics_to_db(diagnostics_df: pd.DataFrame):
     """Сохраняем Diagnostics.csv в таблицы inspections и defects."""
     session = SessionLocal()
@@ -183,7 +208,7 @@ def import_diagnostics_to_db(diagnostics_df: pd.DataFrame):
                 )
                 session.merge(insp)
 
-                # если есть дефект — добавляем запись в defects
+                # если есть дефект — создаём запись в таблице defects
                 if defect_found:
                     defect = Defect(
                         inspection_id=insp.id,
@@ -204,7 +229,6 @@ def import_diagnostics_to_db(diagnostics_df: pd.DataFrame):
         session.close()
 
 
-
 def debug_db_panel():
     """Небольшая панель проверки, что база реально работает."""
     st.markdown("### Проверка базы данных (debug)")
@@ -220,6 +244,7 @@ def debug_db_panel():
         st.write(f"Дефектов в базе: **{defects_count}**")
     except Exception as e:
         st.error(f"Ошибка при работе с базой данных: {e}")
+
 
 
 # ---------- КЛИЕНТ OPENAI ----------
