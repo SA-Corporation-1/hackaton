@@ -351,6 +351,74 @@ def page_defects():
         st.write("Распределение по критичности:")
         st.dataframe(diagnostics_df[crit_col].value_counts())
 
+def page_history():
+    st.title("История диагностик по объекту")
+
+    # Берём объекты из базы
+    session = SessionLocal()
+    try:
+        objects = session.query(Object).order_by(Object.id).all()
+    except Exception as e:
+        st.error(f"Ошибка при чтении объектов из базы: {e}")
+        session.close()
+        return
+
+    if not objects:
+        st.info("В базе нет объектов. Сначала загрузите данные на странице «Импорт данных».")
+        session.close()
+        return
+
+    # Формируем варианты для selectbox: "101 – Bridge A"
+    options = {f"{obj.id} – {obj.object_name}": obj.id for obj in objects}
+
+    selected_label = st.selectbox(
+        "Выберите объект",
+        list(options.keys())
+    )
+    selected_object_id = options[selected_label]
+
+    # Достаём все обследования этого объекта
+    try:
+        inspections = (
+            session.query(Inspection)
+            .filter(Inspection.object_id == selected_object_id)
+            .order_by(Inspection.date.desc())
+            .all()
+        )
+    except Exception as e:
+        st.error(f"Ошибка при чтении диагностик из базы: {e}")
+        session.close()
+        return
+    finally:
+        session.close()
+
+    if not inspections:
+        st.info("Для выбранного объекта пока нет диагностик в базе.")
+        return
+
+    # Переводим в DataFrame для удобного отображения
+    data = []
+    for insp in inspections:
+        data.append({
+            "Дата": insp.date,
+            "Метод": insp.method,
+            "Есть дефект": bool(insp.defect_found),
+            "Критичность (ml_label)": insp.ml_label,
+            "Описание": insp.defect_descr,
+        })
+
+    df_hist = pd.DataFrame(data)
+
+    st.subheader("История обследований")
+    st.dataframe(df_hist, use_container_width=True)
+
+    # Небольшая агрегированная статистика по годам / критичности
+    st.markdown("---")
+    st.subheader("Статистика по критичности")
+
+    if "Критичность (ml_label)" in df_hist.columns:
+        st.write(df_hist["Критичность (ml_label)"].value_counts())
+
 
 def page_dashboard():
     st.title("Дашборд диагностики объектов")
