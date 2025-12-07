@@ -456,22 +456,17 @@ def page_import():
 
     st.write(t("upload_hint"))
 
-    objects_file = st.file_uploader(
-        t("objects_label"),
-        type=["csv"],
-        key="objects_uploader",
-    )
-    diagnostics_file = st.file_uploader(
-        t("diag_label"),
-        type=["csv"],
-        key="diag_uploader",
-    )
+    objects_file = st.file_uploader(t("objects_label"), type="csv")
+    diag_file = st.file_uploader(t("diag_label"), type="csv")
 
     if st.button(t("load_btn")):
-
-        if objects_file is None or diagnostics_file is None:
-            st.error("Пожалуйста, загрузите оба файла.")
+        if objects_file is None or diag_file is None:
+            st.error(t("upload_error_both"))
             return
+
+        # дальше оставляешь свою существующую логику:
+        # чтение CSV, запись в st.session_state, в БД и т.д.
+
 
 
         objects_df = pd.read_csv(objects_file)
@@ -1349,7 +1344,7 @@ def page_report():
 
 st.sidebar.title("IntegrityOS – Demo")
 
-# выбор языка интерфейса (по умолчанию RU)
+# выбор языка интерфейса
 lang_code = st.sidebar.selectbox(
     "Язык интерфейса",
     ["ru", "kk", "en"],
@@ -1358,29 +1353,23 @@ lang_code = st.sidebar.selectbox(
 )
 st.session_state.ui_lang = lang_code
 
-# выбор страницы (все подписи через t(), чтобы язык менялся)
+# выбор страницы — подписи берём из UI_TEXTS
 page = st.sidebar.radio(
     t("menu_select_page"),
-    [
-        t("menu_import"),
-        t("menu_map"),
-        t("menu_defects"),
-        t("menu_history"),
-        t("menu_dashboard"),
-        t("menu_report"),
-    ],
+    ["menu_import", "menu_map", "menu_defects", "menu_history", "menu_dashboard", "menu_report"],
+    format_func=lambda key: UI_TEXTS[lang_code][key],
 )
 
-# роутинг по страницам
-if page == t("menu_import"):
+# роутинг
+if page == "menu_import":
     page_import()
-elif page == t("menu_map"):
+elif page == "menu_map":
     page_map()
-elif page == t("menu_defects"):
+elif page == "menu_defects":
     page_defects()
-elif page == t("menu_history"):
+elif page == "menu_history":
     page_history()
-elif page == t("menu_dashboard"):
+elif page == "menu_dashboard":
     page_dashboard()
-elif page == t("menu_report"):
+elif page == "menu_report":
     page_report()
