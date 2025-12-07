@@ -134,7 +134,24 @@ UI_TEXTS = {
     },
 }
 
+TYPE_LABELS = {
+    "en": {
+        "Lake": "Lake",
+    },
+    "ru": {
+        "Lake": "Озеро",
+    },
+    "kk": {
+        "Lake": "Көл",
+    },
+}
+
 CRIT_LABELS = {
+    "en": {
+        "High": "High",
+        "Medium": "Medium",
+        "Low": "Low",
+    },
     "ru": {
         "High": "Высокая",
         "Medium": "Средняя",
@@ -145,12 +162,8 @@ CRIT_LABELS = {
         "Medium": "Орташа",
         "Low": "Төмен",
     },
-    "en": {
-        "High": "High",
-        "Medium": "Medium",
-        "Low": "Low",
-    },
 }
+
 
 
 # язык по умолчанию — русский
@@ -321,59 +334,85 @@ def page_import():
 
 
 def page_map():
+    import pydeck as pdk
+
     st.title(t("map_title"))
 
-    # 1. Проверяем, загружены ли данные
+    # ---------- 1. Проверяем, что данные загружены ----------
     if st.session_state.objects_df is None:
         st.warning(t("import_first"))
         return
 
     objects_df = st.session_state.objects_df.copy()
 
-    # 2. Проверяем, что есть координаты
+    # Проверяем наличие координат
     required_cols = {"lat", "lon"}
     if not required_cols.issubset(objects_df.columns):
         st.error(t("no_latlon"))
         st.dataframe(objects_df.head())
         return
 
-    # --------- Подготовка колонок type / criticality заранее ---------
-    type_col = None
+    # ---------- 2. Настраиваем признаки ----------
+    # Столбец типа
     if "type" in objects_df.columns:
         type_col = "type"
     elif "object_type" in objects_df.columns:
         type_col = "object_type"
+    else:
+        type_col = None
 
-    crit_col = None
+    # Столбец критичности
     if "criticality" in objects_df.columns:
         crit_col = "criticality"
     elif "ml_label" in objects_df.columns:
         crit_col = "ml_label"
+    else:
+        crit_col = None
 
-    # -------- ЛЕЙАУТ: слева фильтры, справа карта --------
+    # Язык интерфейса
+    lang = st.session_state.get("ui_lang", "ru")
+
+    # Локализация типа и критичности
+    TYPE_LABELS = {
+        "en": {"Lake": "Lake"},
+        "ru": {"Lake": "Озеро"},
+        "kk": {"Lake": "Көл"},
+    }
+
+    CRIT_LABELS = {
+        "en": {"High": "High", "Medium": "Medium", "Low": "Low"},
+        "ru": {"High": "Высокая", "Medium": "Средняя", "Low": "Низкая"},
+        "kk": {"High": "Жоғары", "Medium": "Орташа", "Low": "Төмен"},
+    }
+
+    # ---------- 3. Лэйаут: фильтры + карта ----------
     filters_col, map_col = st.columns([1, 3])
 
-    # ===================== ФИЛЬТРЫ (left) =====================
+    # ======== ФИЛЬТРЫ ========
     with filters_col:
         st.subheader(t("filters_title"))
 
-        # Тип объекта
+        # ---- Фильтр по типу объекта ----
         if type_col:
             all_types = sorted(objects_df[type_col].dropna().unique())
+
+            def type_format(v: str) -> str:
+                return TYPE_LABELS.get(lang, {}).get(str(v), str(v))
+
             selected_types = st.multiselect(
                 t("object_type"),
                 options=all_types,
                 default=all_types,
+                format_func=type_format,
             )
             if selected_types:
                 objects_df = objects_df[objects_df[type_col].isin(selected_types)]
 
-        # Критичность
+        # ---- Фильтр по критичности ----
         if crit_col:
             all_crit = sorted(objects_df[crit_col].dropna().unique())
 
-            def crit_format(v):
-                lang = st.session_state.get("ui_lang", "ru")
+            def crit_format(v: str) -> str:
                 return CRIT_LABELS.get(lang, {}).get(str(v), str(v))
 
             selected_crit = st.multiselect(
@@ -385,6 +424,7 @@ def page_map():
             if selected_crit:
                 objects_df = objects_df[objects_df[crit_col].isin(selected_crit)]
 
+        # ---- Быстрый выбор ----
         st.markdown(f"**{t('quick_select')}:**")
         c1, c2, c3 = st.columns(3)
         with c1:
@@ -401,7 +441,7 @@ def page_map():
                 ]
         with c3:
             if st.button(t("all")):
-                # ничего не делаем, остаются все значения
+                # просто оставляем objects_df как есть
                 pass
 
         # Если после фильтров ничего не осталось
@@ -409,13 +449,17 @@ def page_map():
             st.warning(t("no_objects_for_filters"))
             return
 
-    # ===================== КАРТА + ТАБЛИЦА (right) =====================
+    # ======== КАРТА + ТАБЛИЦА ========
     with map_col:
         st.subheader(t("map_subtitle"))
 
-        # Авто-zoom по разбросу координат
-        lat_min, lat_max = float(objects_df["lat"].min()), float(objects_df["lat"].max())
-        lon_min, lon_max = float(objects_df["lon"].min()), float(objects_df["lon"].max())
+        # ---------- 3.1. Авто zoom ----------
+        lat_min, lat_max = float(objects_df["lat"].min()), float(
+            objects_df["lat"].max()
+        )
+        lon_min, lon_max = float(objects_df["lon"].min()), float(
+            objects_df["lon"].max()
+        )
         lat_range = lat_max - lat_min
         lon_range = lon_max - lon_min
         max_range = max(lat_range, lon_range)
@@ -429,77 +473,125 @@ def page_map():
         else:
             zoom = 4
 
-        # -------- Цвет по критичности --------
+        # ---------- 3.2. Цвет по критичности ----------
         def get_color(row):
             if not crit_col:
-                return [0, 128, 255]  # default blue
+                return [0, 128, 255]  # синий по умолчанию
             crit = str(row[crit_col]).lower()
             if "high" in crit:
-                return [255, 0, 0]  # red
+                return [255, 0, 0]  # красный
             elif "medium" in crit:
-                return [255, 165, 0]  # orange
+                return [255, 165, 0]  # оранжевый
             elif "low" in crit:
-                return [0, 200, 0]  # green
+                return [0, 200, 0]  # зелёный
             else:
-                return [100, 149, 237]  # fallback
+                return [100, 149, 237]  # голубой
 
         objects_df["color"] = objects_df.apply(get_color, axis=1)
 
-        # Центр карты
         midpoint = (
             float(objects_df["lat"].mean()),
             float(objects_df["lon"].mean()),
         )
 
-        # Подготовка данных для tooltip
-        name_col = None
-        if "name" in objects_df.columns:
-            name_col = "name"
-        elif "object_name" in objects_df.columns:
-            name_col = "object_name"
-
         viz_df = objects_df.copy()
 
-        if name_col:
-            viz_df["name_ui"] = viz_df[name_col]
-        elif "object_id" in viz_df.columns:
-            viz_df["name_ui"] = viz_df["object_id"].astype(str)
+        # ---------- 3.3. Формируем UI-поля по языку ----------
+
+        # Имя объекта
+        if lang == "kk" and "name_kk" in viz_df.columns:
+            viz_df["name_ui"] = viz_df["name_kk"]
+        elif lang == "en" and "name_en" in viz_df.columns:
+            viz_df["name_ui"] = viz_df["name_en"]
+        elif "name_ru" in viz_df.columns:
+            viz_df["name_ui"] = viz_df["name_ru"]
+        elif "name" in viz_df.columns:
+            viz_df["name_ui"] = viz_df["name"]
         else:
             viz_df["name_ui"] = ""
 
-        if type_col:
-            viz_df["type_ui"] = viz_df[type_col]
+        # Область / регион
+        if lang == "kk" and "oblast_kk" in viz_df.columns:
+            viz_df["region_ui"] = viz_df["oblast_kk"]
+        elif lang == "en" and "oblast_en" in viz_df.columns:
+            viz_df["region_ui"] = viz_df["oblast_en"]
+        elif "oblast_ru" in viz_df.columns:
+            viz_df["region_ui"] = viz_df["oblast_ru"]
+        elif "oblast" in viz_df.columns:
+            viz_df["region_ui"] = viz_df["oblast"]
+        else:
+            viz_df["region_ui"] = ""
+
+        # Тип объекта (Lake → Озеро/Көл/т.б.)
+        if type_col and type_col in viz_df.columns:
+            def map_type(v):
+                return TYPE_LABELS.get(lang, {}).get(str(v), str(v))
+
+            viz_df["type_ui"] = viz_df[type_col].astype(str).map(map_type)
         else:
             viz_df["type_ui"] = ""
 
+        # Тип воды
+        if lang == "kk" and "water_type_kk" in viz_df.columns:
+            viz_df["water_type_ui"] = viz_df["water_type_kk"]
+        elif lang == "en" and "water_type_en" in viz_df.columns:
+            viz_df["water_type_ui"] = viz_df["water_type_en"]
+        elif "water_type_ru" in viz_df.columns:
+            viz_df["water_type_ui"] = viz_df["water_type_ru"]
+        elif "water_type" in viz_df.columns:
+            viz_df["water_type_ui"] = viz_df["water_type"]
+        else:
+            viz_df["water_type_ui"] = ""
+
+        # Фауна
+        if lang == "kk" and "fauna_kk" in viz_df.columns:
+            viz_df["fauna_ui"] = viz_df["fauna_kk"]
+        elif lang == "en" and "fauna_en" in viz_df.columns:
+            viz_df["fauna_ui"] = viz_df["fauna_en"]
+        elif "fauna_ru" in viz_df.columns:
+            viz_df["fauna_ui"] = viz_df["fauna_ru"]
+        elif "fauna" in viz_df.columns:
+            viz_df["fauna_ui"] = viz_df["fauna"]
+        else:
+            viz_df["fauna_ui"] = ""
+
+        # Дата паспорта и тех. состояние – одинаковые для всех языков
+        viz_df["passport_date_ui"] = (
+            viz_df["passport_date"] if "passport_date" in viz_df.columns else ""
+        )
+        viz_df["tech_state_ui"] = (
+            viz_df["tech_state"].astype(str)
+            if "tech_state" in viz_df.columns
+            else ""
+        )
+
+        # Координаты
+        for src, dst in [
+            ("coords_center", "coords_center_ui"),
+            ("coords_north", "coords_north_ui"),
+            ("coords_south", "coords_south_ui"),
+            ("coords_east", "coords_east_ui"),
+            ("coords_west", "coords_west_ui"),
+        ]:
+            if src in viz_df.columns:
+                viz_df[dst] = viz_df[src]
+            else:
+                viz_df[dst] = ""
+
+        # Критичность в UI
         if crit_col:
-            viz_df["crit_ui"] = viz_df[crit_col]
+            def map_crit(v):
+                return CRIT_LABELS.get(lang, {}).get(str(v), str(v))
+
+            viz_df["crit_ui"] = viz_df[crit_col].astype(str).map(map_crit)
         else:
             viz_df["crit_ui"] = ""
 
-        # Дополнительные поля паспорта (если есть в CSV — покажутся, если нет — будут пустые)
-        extra_cols = {
-            "region": "region_ui",
-            "oblast": "region_ui",  # на всякий случай, если колонка так называется
-            "water_type": "water_type_ui",
-            "fauna": "fauna_ui",
-            "passport_date": "passport_date_ui",
-            "tech_state": "tech_state_ui",
-            "coords_center": "coords_center_ui",
-            "coords_north": "coords_north_ui",
-            "coords_south": "coords_south_ui",
-            "coords_east": "coords_east_ui",
-            "coords_west": "coords_west_ui",
-        }
+        # Если нет object_id — создаём
+        if "object_id" not in viz_df.columns:
+            viz_df["object_id"] = range(1, len(viz_df) + 1)
 
-        for src, dst in extra_cols.items():
-            if src in viz_df.columns:
-                viz_df[dst] = viz_df[src]
-            elif dst not in viz_df.columns:
-                viz_df[dst] = ""
-
-        # Лейблы в зависимости от языка интерфейса
-        lang = st.session_state.get("ui_lang", "ru")
+        # ---------- 3.4. Лейблы для подписи полей ----------
         if lang == "kk":
             type_label = "Объект түрі"
             crit_label = "Критикалылық"
@@ -546,57 +638,50 @@ def page_map():
             east_label = "Восток"
             west_label = "Запад"
 
-        # HTML карточка для tooltip (открывается при наведении)
+        # ---------- 3.5. Tooltip HTML ----------
         tooltip_html = f"""
-             <div style="font-family: Arial, sans-serif; font-size: 12px; padding: 8px 10px;">
-            <div style="font-weight: 600; font-size: 13px; margin-bottom: 6px;">{{name_ui}}</div>
+        <div style="font-family: Arial, sans-serif; font-size: 12px; padding: 8px 10px;">
+          <div style="font-weight: 600; font-size: 13px; margin-bottom: 6px;">{{name_ui}}</div>
 
-              <div><b>{region_label}:</b> {{region_ui}}</div>
-              <div><b>{type_label}:</b> {{type_ui}}</div>
-              <div><b>{water_type_label}:</b> {{water_type_ui}}</div>
-              <div><b>{fauna_label}:</b> {{fauna_ui}}</div>
-              <div><b>{passport_label}:</b> {{passport_date_ui}}</div>
-              <div><b>{tech_label}:</b> {{tech_state_ui}}</div>
+          <div><b>{region_label}:</b> {{region_ui}}</div>
+          <div><b>{type_label}:</b> {{type_ui}}</div>
+          <div><b>{water_type_label}:</b> {{water_type_ui}}</div>
+          <div><b>{fauna_label}:</b> {{fauna_ui}}</div>
+          <div><b>{passport_label}:</b> {{passport_date_ui}}</div>
+          <div><b>{tech_label}:</b> {{tech_state_ui}}</div>
 
-              <hr style="border: 0; border-top: 1px solid #374151; margin: 6px 0;" />
+          <hr style="border: 0; border-top: 1px solid #374151; margin: 6px 0;" />
 
-              <div style="margin-bottom: 2px;"><b>{coords_label}:</b></div>
-              <div>{center_label}: {{coords_center_ui}}</div>
-              <div>{north_label}: {{coords_north_ui}}</div>
-              <div>{south_label}: {{coords_south_ui}}</div>
-              <div>{east_label}: {{coords_east_ui}}</div>
-              <div>{west_label}: {{coords_west_ui}}</div>
+          <div style="margin-bottom: 2px;"><b>{coords_label}:</b></div>
+          <div>{center_label}: {{coords_center_ui}}</div>
+          <div>{north_label}: {{coords_north_ui}}</div>
+          <div>{south_label}: {{coords_south_ui}}</div>
+          <div>{east_label}: {{coords_east_ui}}</div>
+          <div>{west_label}: {{coords_west_ui}}</div>
 
-              <hr style="border: 0; border-top: 1px solid #374151; margin: 6px 0;" />
+          <hr style="border: 0; border-top: 1px solid #374151; margin: 6px 0;" />
 
-              <div><b>ID:</b> {{object_id}}</div>
-              <div><b>{crit_label}:</b> {{crit_ui}}</div>
-            </div>
-            """
+          <div><b>{id_label}:</b> {{object_id}}</div>
+          <div><b>{crit_label}:</b> {{crit_ui}}</div>
+        </div>
+        """
 
-        tooltip = {
-            "html": tooltip_html,
-            "style": {"backgroundColor": "#111827", "color": "white"},
-            }
-
-
-
-        layer = pdk.Layer(
-            "ScatterplotLayer",
-            data=viz_df,
-            get_position='[lon, lat]',
-            get_fill_color='color',
-            get_radius=80,
-            pickable=True,
-        )
-
-        # Базовая карта – CARTO dark (Қазақстан толық көрінеді)
+        # ---------- 3.6. PyDeck карта ----------
         tile_layer = pdk.Layer(
             "TileLayer",
             data="https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
             min_zoom=0,
             max_zoom=22,
             tile_size=256,
+        )
+
+        layer = pdk.Layer(
+            "ScatterplotLayer",
+            data=viz_df,
+            get_position="[lon, lat]",
+            get_fill_color="color",
+            get_radius=80,
+            pickable=True,
         )
 
         deck = pdk.Deck(
@@ -608,18 +693,15 @@ def page_map():
                 pitch=0,
             ),
             map_style=None,
-            tooltip={
-                "html": tooltip_html,
-                "style": {"backgroundColor": "#111827", "color": "white"},
-            },
+            tooltip={"html": tooltip_html, "style": {"backgroundColor": "#111827", "color": "white"}},
         )
 
         st.pydeck_chart(deck, use_container_width=True)
 
-        # --------- Таблица + метрики ---------
+        # ---------- 3.7. Таблица и метрики ----------
         st.subheader(t("table_title"))
         st.dataframe(
-            objects_df.drop(columns=["color"], errors="ignore").head(300),
+            objects_df.drop(columns=["color"], errors="ignore"),
             use_container_width=True,
         )
 
@@ -650,7 +732,6 @@ def page_map():
                         .sum()
                     ),
                 )
-
 
 
 
