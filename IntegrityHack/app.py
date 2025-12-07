@@ -15,10 +15,8 @@ st.set_page_config(
     layout="wide",
 )
 
-# инициализируем БД (создаст таблицы, если их нет)
 init_db()
 
-# ---------- ГЛОБАЛЬНОЕ СОСТОЯНИЕ ----------
 
 if "objects_df" not in st.session_state:
     st.session_state.objects_df = None
@@ -30,13 +28,11 @@ if "processed_df" not in st.session_state:
     st.session_state.processed_df = None
 
 
-# ---------- МУЛЬТИЯЗЫЧНЫЙ UI ----------
-# ---------- МУЛЬТИЯЗЫЧНЫЙ UI ----------
 UI_TEXTS = {
     "ru": {
         "lang_name": "Русский",
 
-        # Импорт
+    
         "import_title": "Импорт данных",
         "objects_file": "Файл объектов (CSV)",
         "diagn_file": "Файл диагностик (CSV)",
@@ -45,7 +41,7 @@ UI_TEXTS = {
         "import_first": "Сначала импортируйте данные.",
         "no_latlon": "В данных отсутствуют координаты (lat/lon).",
 
-        # Карта
+        
         "filters_title": "Фильтры",
         "object_type": "Тип объекта",
         "criticality": "Критичность",
@@ -62,7 +58,7 @@ UI_TEXTS = {
         "medium_metric": "Medium-крит.",
         "no_objects_for_filters": "Объекты не найдены для выбранных фильтров.",
 
-        # ДЕФЕКТЫ
+        
         "defects_title": "Список дефектов / диагностик",
         "defects_method": "Метод контроля",
         "defects_crit": "Критичность",
@@ -73,7 +69,7 @@ UI_TEXTS = {
         "defects_count": "Количество диагностик",
         "defects_crit_dist": "Распределение по критичности",
 
-        # ИСТОРИЯ
+        
         "history_title": "История диагностик по объекту",
         "history_select_object": "Выберите объект",
         "history_no_objects": "В базе нет объектов. Загрузите данные на странице 'Импорт данных'.",
@@ -86,7 +82,7 @@ UI_TEXTS = {
         "history_col_crit": "Критичность (ml_label)",
         "history_col_descr": "Описание",
 
-        # ДАШБОРД
+        
         "dashboard_title": "Дашборд диагностических данных",
         "dashboard_kpi_title": "KPI — ключевые показатели",
         "dashboard_kpi_inspections": "Обследований",
@@ -97,14 +93,14 @@ UI_TEXTS = {
         "dashboard_crit_chart_title": "Распределение по критичности",
         "dashboard_crit_no_data": "Нет данных о критичности.",
 
-        # ОТЧЁТ
+        
         "report_title": "GPT-Отчёт по результатам диагностики",
         "report_summary_title": "Сводная информация",
         "report_generate_btn": "Сформировать отчёт",
         "report_wait_msg": "Генерируем отчёт…",
         "report_no_data": "Нет данных для отчёта. Загрузите CSV сначала.",
 
-        # ЛЕВОЕ МЕНЮ
+        
         "menu_select_page": "Бетти таңдаңыз",
         "menu_import": "Импорт данных",
         "menu_map": "Карта",
@@ -113,7 +109,7 @@ UI_TEXTS = {
         "menu_dashboard": "Дашборд",
         "menu_report": "Отчёт",
 
-        # Импорт – подсказки
+        
         "upload_hint": "Загрузите CSV-файлы объектов и диагностик.",
         "objects_label": "Файл объектов (CSV)",
         "diag_label": "Файл диагностик (CSV)",
@@ -123,7 +119,7 @@ UI_TEXTS = {
     "kk": {
         "lang_name": "Қазақша",
 
-        # Импорт
+        
         "import_title": "Деректерді импорттау",
         "objects_file": "Объектілер файлы (CSV)",
         "diagn_file": "Диагностика файлы (CSV)",
@@ -132,7 +128,7 @@ UI_TEXTS = {
         "import_first": "Алдымен деректерді жүктеңіз.",
         "no_latlon": "lat/lon координаттары жоқ.",
 
-        # Карта
+        
         "filters_title": "Сүзгілер",
         "object_type": "Объект түрі",
         "criticality": "Критикалылық",
@@ -149,7 +145,7 @@ UI_TEXTS = {
         "medium_metric": "Орта крит.",
         "no_objects_for_filters": "Сүзгі бойынша объект жоқ.",
 
-        # ДЕФЕКТТЕР
+        
         "defects_title": "Ақаулар тізімі",
         "defects_method": "Бақылау әдісі",
         "defects_crit": "Критикалылық",
@@ -160,7 +156,7 @@ UI_TEXTS = {
         "defects_count": "Диагностика саны",
         "defects_crit_dist": "Критикалылық бойынша үлестірім",
 
-        # ТАРИХ
+        
         "history_title": "Объект диагностика тарихы",
         "history_select_object": "Объект таңдаңыз",
         "history_no_objects": "Базада объект жоқ. Алдымен CSV жүктеңіз.",
@@ -173,7 +169,7 @@ UI_TEXTS = {
         "history_col_crit": "Критикалылық (ml_label)",
         "history_col_descr": "Сипаттамасы",
 
-        # ДАШБОРД
+       
         "dashboard_title": "Диагностика деректері дашборды",
         "dashboard_kpi_title": "KPI — негізгі көрсеткіштер",
         "dashboard_kpi_inspections": "Тексерулер",
@@ -184,14 +180,14 @@ UI_TEXTS = {
         "dashboard_crit_chart_title": "Критикалылық бойынша диаграмма",
         "dashboard_crit_no_data": "Критикалылық мәліметтері жоқ.",
 
-        # ЕСЕП
+        
         "report_title": "GPT-Есеп (диагностика нәтижелері)",
         "report_summary_title": "Жиынтық ақпарат",
         "report_generate_btn": "Есепті құру",
         "report_wait_msg": "GPT есеп жасауда…",
         "report_no_data": "Есеп үшін мәлімет жоқ. Алдымен CSV жүктеңіз.",
 
-        # МЕНЮ
+        
         "menu_select_page": "Бетті таңдаңыз",
         "menu_import": "Деректерді импорттау",
         "menu_map": "Карта",
@@ -200,7 +196,7 @@ UI_TEXTS = {
         "menu_dashboard": "Дашборд",
         "menu_report": "Есеп",
 
-        # Импорт
+        
         "upload_hint": "Объект және диагностика CSV файлдарын жүктеңіз.",
         "objects_label": "Объектілер файлы (CSV)",
         "diag_label": "Диагностика файлы (CSV)",
@@ -210,7 +206,7 @@ UI_TEXTS = {
     "en": {
         "lang_name": "English",
 
-        # Import
+        
         "import_title": "Data import",
         "objects_file": "Objects file (CSV)",
         "diagn_file": "Diagnostics file (CSV)",
@@ -219,7 +215,7 @@ UI_TEXTS = {
         "import_first": "Please upload data first.",
         "no_latlon": "Missing coordinates (lat/lon).",
 
-        # Map
+        
         "filters_title": "Filters",
         "object_type": "Object type",
         "criticality": "Criticality",
@@ -236,7 +232,7 @@ UI_TEXTS = {
         "medium_metric": "Medium crit.",
         "no_objects_for_filters": "No objects for selected filters.",
 
-        # Defects
+      
         "defects_title": "Diagnostics list",
         "defects_method": "Control method",
         "defects_crit": "Criticality",
@@ -247,7 +243,7 @@ UI_TEXTS = {
         "defects_count": "Diagnostics count",
         "defects_crit_dist": "Criticality distribution",
 
-        # History
+       
         "history_title": "Object diagnostics history",
         "history_select_object": "Select object",
         "history_no_objects": "No objects in DB. Upload CSV first.",
@@ -260,7 +256,7 @@ UI_TEXTS = {
         "history_col_crit": "Criticality (ml_label)",
         "history_col_descr": "Description",
 
-        # Dashboard
+        
         "dashboard_title": "Diagnostics dashboard",
         "dashboard_kpi_title": "KPI — key indicators",
         "dashboard_kpi_inspections": "Inspections",
@@ -271,14 +267,14 @@ UI_TEXTS = {
         "dashboard_crit_chart_title": "Criticality distribution chart",
         "dashboard_crit_no_data": "No criticality data.",
 
-        # Report
+        
         "report_title": "GPT Report on diagnostics",
         "report_summary_title": "Summary information",
         "report_generate_btn": "Generate report",
         "report_wait_msg": "Generating report with GPT…",
         "report_no_data": "No data for report.",
 
-        # MENU
+        
         "menu_select_page": "Select page",
         "menu_import": "Import data",
         "menu_map": "Map",
@@ -287,7 +283,7 @@ UI_TEXTS = {
         "menu_dashboard": "Dashboard",
         "menu_report": "Report",
 
-        # Import
+       
         "upload_hint": "Upload CSV files with objects and diagnostics.",
         "objects_label": "Objects file (CSV)",
         "diag_label": "Diagnostics file (CSV)",
@@ -329,7 +325,6 @@ CRIT_LABELS = {
 
 
 
-# язык по умолчанию — русский
 if "ui_lang" not in st.session_state:
     st.session_state.ui_lang = "ru"
 
@@ -341,7 +336,7 @@ def t(key: str) -> str:
 
 
 
-# ---------- ФУНКЦИИ ДЛЯ РАБОТЫ С БАЗОЙ ДАННЫХ ----------
+
 
 def import_objects_to_db(objects_df: pd.DataFrame):
     """Сохраняем данные Objects.csv в таблицу objects."""
@@ -359,7 +354,7 @@ def import_objects_to_db(objects_df: pd.DataFrame):
                     year=int(row["year"]) if "year" in row and pd.notna(row["year"]) else None,
                     material=str(row.get("material", "")),
                 )
-                session.merge(obj)   # upsert
+                session.merge(obj)   
             except Exception as e:
                 print("Ошибка при импорте объекта:", e)
                 continue
@@ -374,19 +369,19 @@ def import_diagnostics_to_db(diagnostics_df: pd.DataFrame):
     try:
         for idx, row in diagnostics_df.iterrows():
             try:
-                # генерируем diag_id по порядку (1, 2, 3, ...)
+           
                 diag_id = int(idx) + 1
 
-                # дата
+               
                 date_raw = row.get("date", None)
                 date_parsed = pd.to_datetime(date_raw, errors="coerce")
                 if pd.isna(date_parsed):
                     continue
 
-                # severity → defect_found + ml_label
+               
                 severity_raw = str(row.get("severity", "")).strip()
                 severity_lower = severity_raw.lower()
-                defect_found = severity_lower != "low"  # всё, что не Low — считаем дефектом
+                defect_found = severity_lower != "low"  
 
                 insp = Inspection(
                     id=diag_id,
@@ -402,11 +397,11 @@ def import_diagnostics_to_db(diagnostics_df: pd.DataFrame):
                     param1=None,
                     param2=None,
                     param3=None,
-                    ml_label=severity_lower,  # high / medium / low
+                    ml_label=severity_lower,  
                 )
                 session.merge(insp)
 
-                # если есть дефект — создаём запись в таблице defects
+                
                 if defect_found:
                     defect = Defect(
                         inspection_id=insp.id,
@@ -445,28 +440,27 @@ def debug_db_panel():
 
 
 
-# ---------- КЛИЕНТ OPENAI ----------
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 
-# ---------- ФУНКЦИИ ДЛЯ БЛОКОВ ----------
+
 def page_import():
     st.title(t("import_title"))
 
     st.write(t("upload_hint"))
 
-    # 1) Загрузка файлов
+   
     objects_file = st.file_uploader(t("objects_label"), type="csv")
     diagnostics_file = st.file_uploader(t("diag_label"), type="csv")
 
-    # 2) Кнопка "Загрузить и обработать"
+    
     if st.button(t("load_btn")):
         if objects_file is None or diagnostics_file is None:
             st.error(t("upload_error_both"))
             return
 
-        # 3) Чтение CSV
+        
         try:
             objects_df = pd.read_csv(objects_file)
             diagnostics_df = pd.read_csv(diagnostics_file)
@@ -474,12 +468,12 @@ def page_import():
             st.error(f"Ошибка при чтении CSV: {e}")
             return
 
-        # 4) Кладём в session_state
+        
         st.session_state.objects_df = objects_df
         st.session_state.diagnostics_df = diagnostics_df
-        st.session_state.processed_df = diagnostics_df  # как было у тебя
+        st.session_state.processed_df = diagnostics_df  
 
-        # 5) Сохраняем в БД
+       
         try:
             import_objects_to_db(objects_df)
             import_diagnostics_to_db(diagnostics_df)
@@ -487,10 +481,10 @@ def page_import():
             st.error(f"Ошибка при сохранении в базу данных: {e}")
             return
 
-        # 6) Сообщение об успехе
+
         st.success(t("import_success"))
 
-        # 7) Превью таблиц + debug
+
         st.write("Objects (первые 5 строк):")
         st.dataframe(objects_df.head())
 
@@ -506,22 +500,22 @@ def page_map():
 
     st.title(t("map_title"))
 
-    # ---------- 1. Проверяем, что данные загружены ----------
+    
     if st.session_state.objects_df is None:
         st.warning(t("import_first"))
         return
 
     objects_df = st.session_state.objects_df.copy()
 
-    # Проверяем наличие координат
+    
     required_cols = {"lat", "lon"}
     if not required_cols.issubset(objects_df.columns):
         st.error(t("no_latlon"))
         st.dataframe(objects_df.head())
         return
 
-    # ---------- 2. Настраиваем признаки ----------
-    # Столбец типа
+
+    
     if "type" in objects_df.columns:
         type_col = "type"
     elif "object_type" in objects_df.columns:
@@ -529,7 +523,7 @@ def page_map():
     else:
         type_col = None
 
-    # Столбец критичности
+    
     if "criticality" in objects_df.columns:
         crit_col = "criticality"
     elif "ml_label" in objects_df.columns:
@@ -537,10 +531,10 @@ def page_map():
     else:
         crit_col = None
 
-    # Язык интерфейса
+    
     lang = st.session_state.get("ui_lang", "ru")
 
-    # Локализация типа и критичности
+    
     TYPE_LABELS = {
         "en": {"Lake": "Lake"},
         "ru": {"Lake": "Озеро"},
@@ -553,14 +547,14 @@ def page_map():
         "kk": {"High": "Жоғары", "Medium": "Орташа", "Low": "Төмен"},
     }
 
-    # ---------- 3. Лэйаут: фильтры + карта ----------
+    
     filters_col, map_col = st.columns([1, 3])
 
-    # ======== ФИЛЬТРЫ ========
+    
     with filters_col:
         st.subheader(t("filters_title"))
 
-        # ---- Фильтр по типу объекта ----
+        
         if type_col:
             all_types = sorted(objects_df[type_col].dropna().unique())
 
@@ -576,7 +570,7 @@ def page_map():
             if selected_types:
                 objects_df = objects_df[objects_df[type_col].isin(selected_types)]
 
-        # ---- Фильтр по критичности ----
+        
         if crit_col:
             all_crit = sorted(objects_df[crit_col].dropna().unique())
 
@@ -592,7 +586,7 @@ def page_map():
             if selected_crit:
                 objects_df = objects_df[objects_df[crit_col].isin(selected_crit)]
 
-        # ---- Быстрый выбор ----
+       
         st.markdown(f"**{t('quick_select')}:**")
         c1, c2, c3 = st.columns(3)
         with c1:
@@ -609,19 +603,19 @@ def page_map():
                 ]
         with c3:
             if st.button(t("all")):
-                # просто оставляем objects_df как есть
+                
                 pass
 
-        # Если после фильтров ничего не осталось
+       
         if objects_df.empty:
             st.warning(t("no_objects_for_filters"))
             return
 
-    # ======== КАРТА + ТАБЛИЦА ========
+    
     with map_col:
         st.subheader(t("map_subtitle"))
 
-        # ---------- 3.1. Авто zoom ----------
+      
         lat_min, lat_max = float(objects_df["lat"].min()), float(
             objects_df["lat"].max()
         )
@@ -641,19 +635,19 @@ def page_map():
         else:
             zoom = 4
 
-        # ---------- 3.2. Цвет по критичности ----------
+       
         def get_color(row):
             if not crit_col:
-                return [0, 128, 255]  # синий по умолчанию
+                return [0, 128, 255] 
             crit = str(row[crit_col]).lower()
             if "high" in crit:
-                return [255, 0, 0]  # красный
+                return [255, 0, 0] 
             elif "medium" in crit:
-                return [255, 165, 0]  # оранжевый
+                return [255, 165, 0]  
             elif "low" in crit:
-                return [0, 200, 0]  # зелёный
+                return [0, 200, 0] 
             else:
-                return [100, 149, 237]  # голубой
+                return [100, 149, 237]  
 
         objects_df["color"] = objects_df.apply(get_color, axis=1)
 
@@ -664,9 +658,9 @@ def page_map():
 
         viz_df = objects_df.copy()
 
-        # ---------- 3.3. Формируем UI-поля по языку ----------
+        
 
-        # Имя объекта
+       
         if lang == "kk" and "name_kk" in viz_df.columns:
             viz_df["name_ui"] = viz_df["name_kk"]
         elif lang == "en" and "name_en" in viz_df.columns:
@@ -678,7 +672,7 @@ def page_map():
         else:
             viz_df["name_ui"] = ""
 
-        # Область / регион
+        
         if lang == "kk" and "oblast_kk" in viz_df.columns:
             viz_df["region_ui"] = viz_df["oblast_kk"]
         elif lang == "en" and "oblast_en" in viz_df.columns:
@@ -690,7 +684,7 @@ def page_map():
         else:
             viz_df["region_ui"] = ""
 
-        # Тип объекта (Lake → Озеро/Көл/т.б.)
+       
         if type_col and type_col in viz_df.columns:
             def map_type(v):
                 return TYPE_LABELS.get(lang, {}).get(str(v), str(v))
@@ -699,7 +693,7 @@ def page_map():
         else:
             viz_df["type_ui"] = ""
 
-        # Тип воды
+       
         if lang == "kk" and "water_type_kk" in viz_df.columns:
             viz_df["water_type_ui"] = viz_df["water_type_kk"]
         elif lang == "en" and "water_type_en" in viz_df.columns:
@@ -711,7 +705,7 @@ def page_map():
         else:
             viz_df["water_type_ui"] = ""
 
-        # Фауна
+        
         if lang == "kk" and "fauna_kk" in viz_df.columns:
             viz_df["fauna_ui"] = viz_df["fauna_kk"]
         elif lang == "en" and "fauna_en" in viz_df.columns:
@@ -723,7 +717,7 @@ def page_map():
         else:
             viz_df["fauna_ui"] = ""
 
-        # Дата паспорта и тех. состояние – одинаковые для всех языков
+       
         viz_df["passport_date_ui"] = (
             viz_df["passport_date"] if "passport_date" in viz_df.columns else ""
         )
@@ -733,7 +727,7 @@ def page_map():
             else ""
         )
 
-        # Координаты
+    
         for src, dst in [
             ("coords_center", "coords_center_ui"),
             ("coords_north", "coords_north_ui"),
@@ -746,7 +740,7 @@ def page_map():
             else:
                 viz_df[dst] = ""
 
-        # Критичность в UI
+        
         if crit_col:
             def map_crit(v):
                 return CRIT_LABELS.get(lang, {}).get(str(v), str(v))
@@ -755,11 +749,11 @@ def page_map():
         else:
             viz_df["crit_ui"] = ""
 
-        # Если нет object_id — создаём
+        
         if "object_id" not in viz_df.columns:
             viz_df["object_id"] = range(1, len(viz_df) + 1)
 
-        # ---------- 3.4. Лейблы для подписи полей ----------
+       
         if lang == "kk":
             type_label = "Объект түрі"
             crit_label = "Критикалылық"
@@ -790,7 +784,7 @@ def page_map():
             south_label = "South"
             east_label = "East"
             west_label = "West"
-        else:  # ru
+        else:  
             type_label = "Тип объекта"
             crit_label = "Критичность"
             id_label = "ID"
@@ -806,7 +800,7 @@ def page_map():
             east_label = "Восток"
             west_label = "Запад"
 
-        # ---------- 3.5. Tooltip HTML ----------
+        
         tooltip_html = f"""
         <div style="font-family: Arial, sans-serif; font-size: 12px; padding: 8px 10px;">
           <div style="font-weight: 600; font-size: 13px; margin-bottom: 6px;">{{name_ui}}</div>
@@ -834,7 +828,7 @@ def page_map():
         </div>
         """
 
-        # ---------- 3.6. PyDeck карта ----------
+        
         tile_layer = pdk.Layer(
             "TileLayer",
             data="https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
@@ -866,7 +860,7 @@ def page_map():
 
         st.pydeck_chart(deck, use_container_width=True)
 
-        # ---------- 3.7. Таблица и метрики ----------
+        
         st.subheader(t("table_title"))
         st.dataframe(
             objects_df.drop(columns=["color"], errors="ignore"),
@@ -907,7 +901,7 @@ def _crit_format(value: str) -> str:
     """Локализуем High/Medium/Low в зависимости от языка UI."""
     lang = st.session_state.get("ui_lang", "ru")
     key = str(value).strip()
-    # пробуем и с заглавной, и в нижнем регистре
+   
     return (
         CRIT_LABELS.get(lang, {}).get(key, None)
         or CRIT_LABELS.get(lang, {}).get(key.capitalize(), key)
@@ -925,7 +919,7 @@ def page_defects():
 
     st.subheader(t("filters_title"))
 
-    # ---- фильтр по методу ----
+    
     if "method" in diagnostics_df.columns:
         all_methods = sorted(diagnostics_df["method"].dropna().unique())
         selected_methods = st.multiselect(
@@ -938,7 +932,7 @@ def page_defects():
                 diagnostics_df["method"].isin(selected_methods)
             ]
 
-    # ---- фильтр по критичности ----
+    
     crit_col = None
     if "criticality" in diagnostics_df.columns:
         crit_col = "criticality"
@@ -958,7 +952,7 @@ def page_defects():
                 diagnostics_df[crit_col].isin(selected_crit)
             ]
 
-    # ---- фильтр по датам ----
+    
     if "date" in diagnostics_df.columns:
         diagnostics_df["date_parsed"] = pd.to_datetime(
             diagnostics_df["date"], errors="coerce"
@@ -983,14 +977,14 @@ def page_defects():
         st.warning(t("defects_no_records"))
         return
 
-    # Таблица
+   
     st.subheader(t("defects_table"))
     cols_to_show = [
         c for c in diagnostics_df.columns if c not in ["date_parsed"]
     ]
     st.dataframe(diagnostics_df[cols_to_show].head(300), use_container_width=True)
 
-    # Краткая статистика
+    
     st.subheader(t("defects_summary"))
     st.write(f"{t('defects_count')}: {len(diagnostics_df)}")
 
@@ -1021,7 +1015,7 @@ def page_history():
         session.close()
         return
 
-    # options: "2 – Кольсоль" и т.п.
+    
     options = {
         f"{obj.id} – {obj.object_name}": obj.id for obj in objects
     }
@@ -1031,7 +1025,7 @@ def page_history():
     )
     selected_object_id = options[selected_label]
 
-    # тянем все обследования по объекту
+    
     try:
         inspections = (
             session.query(Inspection)
@@ -1050,7 +1044,7 @@ def page_history():
         st.info(t("history_no_inspections"))
         return
 
-    # формируем DataFrame
+    
     data = []
     col_date = t("history_col_date")
     col_method = t("history_col_method")
@@ -1097,7 +1091,7 @@ def page_dashboard():
         st.warning(t("no_objects_for_filters"))
         return
 
-    # дата / год
+    
     if "date" in diagnostics.columns:
         diagnostics["date"] = pd.to_datetime(
             diagnostics["date"], errors="coerce"
@@ -1106,7 +1100,7 @@ def page_dashboard():
     else:
         diagnostics["year"] = None
 
-    # severity нормализуем
+    
     if "severity" in diagnostics.columns:
         diagnostics["severity"] = (
             diagnostics["severity"].astype(str).str.lower()
@@ -1138,7 +1132,7 @@ def page_dashboard():
 
     st.markdown("---")
 
-    # -------- распределение по критичности --------
+    
     st.subheader(t("dashboard_crit_title"))
 
     if diagnostics["severity"].notna().any():
@@ -1167,12 +1161,12 @@ def page_dashboard():
 def page_report():
     st.title("GPT-Отчёт по результатам диагностики")
 
-    # 1. Проверяем, что данные загружены
+    
     if "diagnostics_df" not in st.session_state or "objects_df" not in st.session_state:
         st.warning("Сначала загрузите данные на странице «Импорт данных».")
         return
 
-    # 2. Берём копии датафреймов
+    
     objects = st.session_state["objects_df"].copy()
     diagnostics = st.session_state["diagnostics_df"].copy()
 
@@ -1180,16 +1174,16 @@ def page_report():
         st.warning("Таблицы пустые. Загрузите корректные CSV.")
         return
 
-    # 3. ГАРАНТИРУЕМ НУЖНЫЕ КОЛОНКИ
+   
 
-    # date → year
+    
     if "date" in diagnostics.columns:
         diagnostics["date"] = pd.to_datetime(diagnostics["date"], errors="coerce")
         diagnostics["year"] = diagnostics["date"].dt.year
     else:
         diagnostics["year"] = None
 
-    # defect_found: если нет — создаём из severity
+   
     if "defect_found" not in diagnostics.columns:
         if "severity" in diagnostics.columns:
             diagnostics["defect_found"] = diagnostics["severity"].apply(
@@ -1198,19 +1192,19 @@ def page_report():
         else:
             diagnostics["defect_found"] = 0
 
-    # ml_label: если нет — делаем из severity
+    
     if "ml_label" not in diagnostics.columns:
         if "severity" in diagnostics.columns:
             diagnostics["ml_label"] = diagnostics["severity"].astype(str).str.lower()
         else:
             diagnostics["ml_label"] = "unknown"
 
-    # 4. KPI
+
     total_inspections = len(diagnostics)
     total_objects = objects["object_id"].nunique() if "object_id" in objects.columns else 0
     total_defects = int(diagnostics["defect_found"].sum())
 
-    # Методы контроля (только по дефектам)
+    
     if "method" in diagnostics.columns:
         method_stats = (
             diagnostics[diagnostics["defect_found"] == 1]
@@ -1222,13 +1216,13 @@ def page_report():
     else:
         method_stats = {}
 
-    # Критичность
+    
     if "ml_label" in diagnostics.columns:
         crit_stats = diagnostics["ml_label"].value_counts().to_dict()
     else:
         crit_stats = {}
 
-    # Динамика по годам
+    
     if "year" in diagnostics.columns and diagnostics["year"].notna().any():
         year_stats = (
             diagnostics.dropna(subset=["year"])
@@ -1240,7 +1234,7 @@ def page_report():
     else:
         year_stats = {}
 
-    # Топ-объекты
+   
     if "object_id" in diagnostics.columns:
         top_objects_series = (
             diagnostics[diagnostics["defect_found"] == 1]
@@ -1253,7 +1247,7 @@ def page_report():
     else:
         top_objects = {}
 
-    # 5. Показываем сводку на экране
+   
     st.subheader("Сводная информация (данные дашборда)")
     st.write("Обследований:", total_inspections)
     st.write("Объектов:", total_objects)
@@ -1263,7 +1257,7 @@ def page_report():
     st.write("Динамика по годам:", year_stats)
     st.write("Топ проблемных объектов:", top_objects)
 
-    # 6. GPT-отчёт
+    
     if st.button("Сформировать отчёт"):
         with st.spinner("Генерация полного инженерного отчёта..."):
 
@@ -1312,7 +1306,7 @@ def page_report():
 
             report = response.output_text
 
-            # Показ и HTML-версия
+           
             st.subheader("Готовый GPT-Отчёт")
             st.markdown(report)
 
@@ -1350,11 +1344,11 @@ def page_report():
                 "text/html"
             )
 
-# ---------- МЕНЮ СТРАНИЦ ----------
+
 
 st.sidebar.title("IntegrityOS – Demo")
 
-# выбор языка интерфейса
+
 lang_code = st.sidebar.selectbox(
     "Язык интерфейса",
     ["ru", "kk", "en"],
@@ -1363,14 +1357,14 @@ lang_code = st.sidebar.selectbox(
 )
 st.session_state.ui_lang = lang_code
 
-# выбор страницы — подписи берём из UI_TEXTS
+
 page = st.sidebar.radio(
     t("menu_select_page"),
     ["menu_import", "menu_map", "menu_defects", "menu_history", "menu_dashboard", "menu_report"],
     format_func=lambda key: UI_TEXTS[lang_code][key],
 )
 
-# роутинг
+
 if page == "menu_import":
     page_import()
 elif page == "menu_map":
