@@ -548,36 +548,37 @@ def page_map():
 
         # HTML карточка для tooltip (открывается при наведении)
         tooltip_html = f"""
-<div style="font-family: Arial, sans-serif; font-size: 12px; padding: 8px 10px;">
-  <div style="font-weight: 600; font-size: 13px; margin-bottom: 6px;">{{name_ui}}</div>
+             <div style="font-family: Arial, sans-serif; font-size: 12px; padding: 8px 10px;">
+            <div style="font-weight: 600; font-size: 13px; margin-bottom: 6px;">{{name_ui}}</div>
 
-  <div><b>{region_label}:</b> {{region_ui}}</div>
-  <div><b>{type_label}:</b> {{type_ui}}</div>
-  <div><b>{water_type_label}:</b> {{water_type_ui}}</div>
-  <div><b>{fauna_label}:</b> {{fauna_ui}}</div>
-  <div><b>{passport_label}:</b> {{passport_date_ui}}</div>
-  <div><b>{tech_label}:</b> {{tech_state_ui}}</div>
+              <div><b>{region_label}:</b> {{region_ui}}</div>
+              <div><b>{type_label}:</b> {{type_ui}}</div>
+              <div><b>{water_type_label}:</b> {{water_type_ui}}</div>
+              <div><b>{fauna_label}:</b> {{fauna_ui}}</div>
+              <div><b>{passport_label}:</b> {{passport_date_ui}}</div>
+              <div><b>{tech_label}:</b> {{tech_state_ui}}</div>
 
-  <hr style="border: 0; border-top: 1px solid #374151; margin: 6px 0;" />
+              <hr style="border: 0; border-top: 1px solid #374151; margin: 6px 0;" />
 
-  <div style="margin-bottom: 2px;"><b>{coords_label}:</b></div>
-  <div>{center_label}: {{coords_center_ui}}</div>
-  <div>{north_label}: {{coords_north_ui}}</div>
-  <div>{south_label}: {{coords_south_ui}}</div>
-  <div>{east_label}: {{coords_east_ui}}</div>
-  <div>{west_label}: {{coords_west_ui}}</div>
+              <div style="margin-bottom: 2px;"><b>{coords_label}:</b></div>
+              <div>{center_label}: {{coords_center_ui}}</div>
+              <div>{north_label}: {{coords_north_ui}}</div>
+              <div>{south_label}: {{coords_south_ui}}</div>
+              <div>{east_label}: {{coords_east_ui}}</div>
+              <div>{west_label}: {{coords_west_ui}}</div>
 
-  <hr style="border: 0; border-top: 1px solid #374151; margin: 6px 0;" />
+              <hr style="border: 0; border-top: 1px solid #374151; margin: 6px 0;" />
 
-  <div><b>ID:</b> {{object_id}}</div>
-  <div><b>{crit_label}:</b> {{crit_ui}}</div>
-</div>
-"""
+              <div><b>ID:</b> {{object_id}}</div>
+              <div><b>{crit_label}:</b> {{crit_ui}}</div>
+            </div>
+            """
 
-tooltip = {
-    "html": tooltip_html,
-    "style": {"backgroundColor": "#111827", "color": "white"},
-}
+        tooltip = {
+            "html": tooltip_html,
+            "style": {"backgroundColor": "#111827", "color": "white"},
+            }
+
 
 
         layer = pdk.Layer(
