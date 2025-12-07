@@ -456,39 +456,49 @@ def page_import():
 
     st.write(t("upload_hint"))
 
+    # 1) Загрузка файлов
     objects_file = st.file_uploader(t("objects_label"), type="csv")
-    diag_file = st.file_uploader(t("diag_label"), type="csv")
+    diagnostics_file = st.file_uploader(t("diag_label"), type="csv")
 
+    # 2) Кнопка "Загрузить и обработать"
     if st.button(t("load_btn")):
-        if objects_file is None or diag_file is None:
+        if objects_file is None or diagnostics_file is None:
             st.error(t("upload_error_both"))
             return
 
-        # дальше оставляешь свою существующую логику:
-        # чтение CSV, запись в st.session_state, в БД и т.д.
+        # 3) Чтение CSV
+        try:
+            objects_df = pd.read_csv(objects_file)
+            diagnostics_df = pd.read_csv(diagnostics_file)
+        except Exception as e:
+            st.error(f"Ошибка при чтении CSV: {e}")
+            return
 
-
-
-        objects_df = pd.read_csv(objects_file)
-        diagnostics_df = pd.read_csv(diagnostics_file)
-
-        # сохраняем в session_state, как раньше
+        # 4) Кладём в session_state
         st.session_state.objects_df = objects_df
         st.session_state.diagnostics_df = diagnostics_df
-        st.session_state.processed_df = diagnostics_df  # временно
+        st.session_state.processed_df = diagnostics_df  # как было у тебя
 
-        # дополнительно сохраняем в БД
-        import_objects_to_db(objects_df)
-        import_diagnostics_to_db(diagnostics_df)
+        # 5) Сохраняем в БД
+        try:
+            import_objects_to_db(objects_df)
+            import_diagnostics_to_db(diagnostics_df)
+        except Exception as e:
+            st.error(f"Ошибка при сохранении в базу данных: {e}")
+            return
 
-        st.success("Данные загружены и сохранены в базе данных!")
+        # 6) Сообщение об успехе
+        st.success(t("import_success"))
 
+        # 7) Превью таблиц + debug
         st.write("Objects (первые 5 строк):")
         st.dataframe(objects_df.head())
+
         st.write("Diagnostics (первые 5 строк):")
         st.dataframe(diagnostics_df.head())
 
         debug_db_panel()
+
 
 
 def page_map():
