@@ -31,9 +31,12 @@ if "processed_df" not in st.session_state:
 
 
 # ---------- МУЛЬТИЯЗЫЧНЫЙ UI ----------
+# ---------- МУЛЬТИЯЗЫЧНЫЙ UI ----------
 UI_TEXTS = {
     "ru": {
-        "lang_name": "Русский", 
+        "lang_name": "Русский",
+
+        # Импорт
         "import_title": "Импорт данных",
         "objects_file": "Файл объектов (CSV)",
         "diagn_file": "Файл диагностик (CSV)",
@@ -41,6 +44,8 @@ UI_TEXTS = {
         "import_success": "Данные успешно загружены!",
         "import_first": "Сначала импортируйте данные.",
         "no_latlon": "В данных отсутствуют координаты (lat/lon).",
+
+        # Карта
         "filters_title": "Фильтры",
         "object_type": "Тип объекта",
         "criticality": "Критичность",
@@ -98,10 +103,27 @@ UI_TEXTS = {
         "report_generate_btn": "Сформировать отчёт",
         "report_wait_msg": "Генерируем отчёт…",
         "report_no_data": "Нет данных для отчёта. Загрузите CSV сначала.",
+
+        # ЛЕВОЕ МЕНЮ
+        "menu_select_page": "Бетти таңдаңыз",
+        "menu_import": "Импорт данных",
+        "menu_map": "Карта",
+        "menu_defects": "Актуал",
+        "menu_history": "История объекта",
+        "menu_dashboard": "Дашборд",
+        "menu_report": "Отчёт",
+
+        # Импорт – подсказки
+        "upload_hint": "Загрузите CSV-файлы объектов и диагностик.",
+        "objects_label": "Файл объектов (CSV)",
+        "diag_label": "Файл диагностик (CSV)",
+        "upload_error_both": "Пожалуйста, загрузите оба файла.",
     },
 
     "kk": {
         "lang_name": "Қазақша",
+
+        # Импорт
         "import_title": "Деректерді импорттау",
         "objects_file": "Объектілер файлы (CSV)",
         "diagn_file": "Диагностика файлы (CSV)",
@@ -109,6 +131,8 @@ UI_TEXTS = {
         "import_success": "Деректер сәтті жүктелді!",
         "import_first": "Алдымен деректерді жүктеңіз.",
         "no_latlon": "lat/lon координаттары жоқ.",
+
+        # Карта
         "filters_title": "Сүзгілер",
         "object_type": "Объект түрі",
         "criticality": "Критикалылық",
@@ -166,10 +190,27 @@ UI_TEXTS = {
         "report_generate_btn": "Есепті құру",
         "report_wait_msg": "GPT есеп жасауда…",
         "report_no_data": "Есеп үшін мәлімет жоқ. Алдымен CSV жүктеңіз.",
+
+        # МЕНЮ
+        "menu_select_page": "Бетті таңдаңыз",
+        "menu_import": "Деректерді импорттау",
+        "menu_map": "Карта",
+        "menu_defects": "Ақаулар",
+        "menu_history": "Объект тарихы",
+        "menu_dashboard": "Дашборд",
+        "menu_report": "Есеп",
+
+        # Импорт
+        "upload_hint": "Объект және диагностика CSV файлдарын жүктеңіз.",
+        "objects_label": "Объектілер файлы (CSV)",
+        "diag_label": "Диагностика файлы (CSV)",
+        "upload_error_both": "Екі файлды да жүктеңіз.",
     },
 
     "en": {
         "lang_name": "English",
+
+        # Import
         "import_title": "Data import",
         "objects_file": "Objects file (CSV)",
         "diagn_file": "Diagnostics file (CSV)",
@@ -177,6 +218,8 @@ UI_TEXTS = {
         "import_success": "Data loaded successfully!",
         "import_first": "Please upload data first.",
         "no_latlon": "Missing coordinates (lat/lon).",
+
+        # Map
         "filters_title": "Filters",
         "object_type": "Object type",
         "criticality": "Criticality",
@@ -193,7 +236,7 @@ UI_TEXTS = {
         "medium_metric": "Medium crit.",
         "no_objects_for_filters": "No objects for selected filters.",
 
-        # DEFECTS
+        # Defects
         "defects_title": "Diagnostics list",
         "defects_method": "Control method",
         "defects_crit": "Criticality",
@@ -204,7 +247,7 @@ UI_TEXTS = {
         "defects_count": "Diagnostics count",
         "defects_crit_dist": "Criticality distribution",
 
-        # HISTORY
+        # History
         "history_title": "Object diagnostics history",
         "history_select_object": "Select object",
         "history_no_objects": "No objects in DB. Upload CSV first.",
@@ -217,7 +260,7 @@ UI_TEXTS = {
         "history_col_crit": "Criticality (ml_label)",
         "history_col_descr": "Description",
 
-        # DASHBOARD
+        # Dashboard
         "dashboard_title": "Diagnostics dashboard",
         "dashboard_kpi_title": "KPI — key indicators",
         "dashboard_kpi_inspections": "Inspections",
@@ -228,14 +271,30 @@ UI_TEXTS = {
         "dashboard_crit_chart_title": "Criticality distribution chart",
         "dashboard_crit_no_data": "No criticality data.",
 
-        # REPORT
+        # Report
         "report_title": "GPT Report on diagnostics",
         "report_summary_title": "Summary information",
         "report_generate_btn": "Generate report",
         "report_wait_msg": "Generating report with GPT…",
         "report_no_data": "No data for report.",
+
+        # MENU
+        "menu_select_page": "Select page",
+        "menu_import": "Import data",
+        "menu_map": "Map",
+        "menu_defects": "Defects",
+        "menu_history": "Object history",
+        "menu_dashboard": "Dashboard",
+        "menu_report": "Report",
+
+        # Import
+        "upload_hint": "Upload CSV files with objects and diagnostics.",
+        "objects_label": "Objects file (CSV)",
+        "diag_label": "Diagnostics file (CSV)",
+        "upload_error_both": "Please upload both files.",
     },
 }
+
 
 
 TYPE_LABELS = {
