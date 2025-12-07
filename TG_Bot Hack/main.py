@@ -14,6 +14,9 @@ from telegram.ext import (
     filters,
 )
 
+# Load .env early so MAKE_WEBHOOK picks it up
+load_dotenv()
+
 # --- Config ---
 MAKE_WEBHOOK = os.getenv(
     "MAKE_WEBHOOK_URL",
@@ -27,7 +30,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# Анкета өрістері (CSV бағандарына сай)
+# Толық көптілді анкета өрістері
 OBJECT_FIELDS: List[Tuple[str, str]] = [
     ("object_id", "object_id (мысалы: 1)"),
     ("name_ru", "name_ru"),
@@ -132,7 +135,12 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         return
 
     content = update.message.text.strip()
-    status = send_to_make({"type": "text", "text": content})
+    payload = {
+        "type": "text",
+        "text": content,
+        "chat_id": update.effective_chat.id if update.effective_chat else None,
+    }
+    status = send_to_make(payload)
     await update.message.reply_text(f"Make-ке {status}\n\nАнкета үшін /start басыңыз.")
 
 
@@ -155,6 +163,7 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         "type": "csv",
         "file_name": doc.file_name,
         "content": content_text,
+        "chat_id": update.effective_chat.id if update.effective_chat else None,
     }
     status = send_to_make(payload)
     await update.message.reply_text(f"CSV Make-ке {status}")
@@ -218,7 +227,20 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 async def finalize_form(carrier: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     kind = context.user_data.get("kind", "unknown")
     form = context.user_data.get("form", {})
-    status = send_to_make({"type": "form", "kind": kind, "data": form})
+    obj_id = form.get("object_id", "")
+    diag_id = form.get("diag_id", "")
+    # Ensure IDs also live inside data
+    form["object_id"] = obj_id
+    form["diag_id"] = diag_id
+    payload = {
+        "type": "form",
+        "kind": kind,
+        "object_id": obj_id,
+        "diag_id": diag_id,
+        "data": form,
+        "chat_id": carrier.effective_chat.id if carrier.effective_chat else None,
+    }
+    status = send_to_make(payload)
 
     buttons = InlineKeyboardMarkup(
         [
@@ -226,7 +248,11 @@ async def finalize_form(carrier: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             [InlineKeyboardButton("Басты меню", callback_data="menu")],
         ]
     )
-    reply = f"Анкета Make-ке {status}.\nКелесі: Streamlit ашыңыз немесе жаңа анкетаны бастаңыз."
+    reply = (
+        f"Анкета Make-ке {status}.\n"
+        f"object_id: {obj_id or '(пусто)'} | diag_id: {diag_id or '(пусто)'}\n"
+        "Келесі: Streamlit ашыңыз немесе жаңа анкетаны бастаңыз."
+    )
 
     if carrier.callback_query:
         await carrier.callback_query.edit_message_text(reply, reply_markup=buttons)
@@ -240,9 +266,7 @@ async def cmd_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     context.user_data.clear()
     await update.message.reply_text("Анкета тоқтатылды. /start басып қайта бастаңыз.", reply_markup=menu_keyboard())
 
-
 def main() -> None:
-    load_dotenv()
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
         raise RuntimeError("TELEGRAM_BOT_TOKEN not set. Add it to .env")
