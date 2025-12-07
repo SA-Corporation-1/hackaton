@@ -33,6 +33,7 @@ if "processed_df" not in st.session_state:
 # ---------- МУЛЬТИЯЗЫЧНЫЙ UI ----------
 UI_TEXTS = {
     "ru": {
+        "lang_name": "Русский", 
         "import_title": "Импорт данных",
         "objects_file": "Файл объектов (CSV)",
         "diagn_file": "Файл диагностик (CSV)",
@@ -100,6 +101,7 @@ UI_TEXTS = {
     },
 
     "kk": {
+        "lang_name": "Қазақша",
         "import_title": "Деректерді импорттау",
         "objects_file": "Объектілер файлы (CSV)",
         "diagn_file": "Диагностика файлы (CSV)",
@@ -167,6 +169,7 @@ UI_TEXTS = {
     },
 
     "en": {
+        "lang_name": "English",
         "import_title": "Data import",
         "objects_file": "Objects file (CSV)",
         "diagn_file": "Diagnostics file (CSV)",
