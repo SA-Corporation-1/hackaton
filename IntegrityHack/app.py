@@ -65,6 +65,51 @@ UI_TEXTS = {
         "import_first": "Сначала загрузите данные на странице «Импорт данных».",
         "no_latlon": "В Objects.csv обязательно должны быть колонки 'lat' и 'lon'.",
         "no_objects_for_filters": "По выбранным фильтрам нет объектов.",
+        UI_TEXTS = {
+    "ru": {
+        # ... то, что уже есть ...
+
+        # Дефекты / актуал
+        "defects_title": "Список дефектов / диагностик",
+        "defects_method": "Метод контроля",
+        "defects_crit": "Критичность",
+        "defects_date_range": "Диапазон дат",
+        "defects_no_records": "По выбранным фильтрам нет записей.",
+        "defects_table": "Таблица диагностик",
+        "defects_summary": "Краткая статистика",
+        "defects_count": "Количество диагностик",
+        "defects_crit_dist": "Распределение по критичности",
+
+        # История объекта
+        "history_title": "История диагностик по объекту",
+        "history_select_object": "Выберите объект",
+        "history_no_objects": "В базе нет объектов. Сначала загрузите данные на странице «Импорт данных».",
+        "history_no_inspections": "Для выбранного объекта пока нет диагностик в базе.",
+        "history_table": "История обследований",
+        "history_stats": "Статистика по критичности",
+        "history_col_date": "Дата",
+        "history_col_method": "Метод",
+        "history_col_defect": "Есть дефект",
+        "history_col_crit": "Критичность (ml_label)",
+        "history_col_descr": "Описание",
+
+        # Дашборд
+        "dashboard_title": "Дашборд диагностических данных",
+        "dashboard_kpi_title": "KPI — ключевые показатели системы",
+        "dashboard_kpi_inspections": "Обследований",
+        "dashboard_kpi_objects": "Уникальных объектов",
+        "dashboard_kpi_defects": "Найдено дефектов",
+        "dashboard_kpi_high": "Высокая критичность",
+        "dashboard_crit_title": "Распределение дефектов по критичности",
+        "dashboard_crit_chart_title": "Распределение дефектов по критичности",
+        "dashboard_crit_no_data": "Нет данных о критичности.",
+
+        # Отчёт GPT
+        "report_title": "GPT-отчёт по результатам диагностики",
+        "report_summary_title": "Сводная информация (данные дашборда)",
+        "report_generate_btn": "Сформировать отчёт",
+        "report_wait_msg": "Генерируем отчёт при помощи GPT...",
+        "report_no_data": "Нет данных для отчёта. Сначала загрузите CSV на странице «Импорт данных».",
     },
     "kk": {
         "upload_both": "Екі файлды да жүктеңіз.",
@@ -98,6 +143,47 @@ UI_TEXTS = {
         "import_first": "Алдымен «Импорт данных» бетінде деректерді жүктеңіз.",
         "no_latlon": "Objects.csv ішінде міндетті түрде 'lat' және 'lon' колонкалары болуы керек.",
         "no_objects_for_filters": "Таңдалған сүзгілер бойынша объектілер жоқ.",
+        # Дефекттер
+        "defects_title": "Ақаулар тізімі",
+        "defects_method": "Бақылау әдісі",
+        "defects_crit": "Критикалылық",
+        "defects_date_range": "Күндер диапазоны",
+        "defects_no_records": "Таңдалған сүзгілер бойынша жазбалар жоқ.",
+        "defects_table": "Диагностика кестесі",
+        "defects_summary": "Қысқаша статистика",
+        "defects_count": "Диагностикалар саны",
+        "defects_crit_dist": "Критикалылық бойынша үлестірім",
+
+        # Объект тарихы
+        "history_title": "Объект бойынша диагностика тарихы",
+        "history_select_object": "Объект таңдаңыз",
+        "history_no_objects": "Базада объектілер жоқ. Алдымен «Деректерді импорттау» бетінде жүктеңіз.",
+        "history_no_inspections": "Таңдалған объект бойынша әзірге диагностика жоқ.",
+        "history_table": "Тексеру тарихы",
+        "history_stats": "Критикалылық статистикасы",
+        "history_col_date": "Күні",
+        "history_col_method": "Әдіс",
+        "history_col_defect": "Ақау бар",
+        "history_col_crit": "Критикалылық (ml_label)",
+        "history_col_descr": "Сипаттамасы",
+
+        # Дашборд
+        "dashboard_title": "Диагностикалық деректер дашборды",
+        "dashboard_kpi_title": "KPI — жүйенің негізгі көрсеткіштері",
+        "dashboard_kpi_inspections": "Тексерулер саны",
+        "dashboard_kpi_objects": "Уникалды объектілер",
+        "dashboard_kpi_defects": "Анықталған ақаулар",
+        "dashboard_kpi_high": "Жоғары критикалылық",
+        "dashboard_crit_title": "Критикалылық бойынша ақаулар үлестірімі",
+        "dashboard_crit_chart_title": "Критикалылық бойынша ақаулар үлестірімі",
+        "dashboard_crit_no_data": "Критикалылық бойынша деректер жоқ.",
+
+        # Отчёт GPT
+        "report_title": "GPT-есеп (диагностика нәтижелері)",
+        "report_summary_title": "Жиынтық ақпарат (дашборд деректері)",
+        "report_generate_btn": "Есепті құру",
+        "report_wait_msg": "GPT көмегімен есеп жасалуда...",
+        "report_no_data": "Есеп үшін деректер жоқ. Алдымен CSV файлдарын «Деректерді импорттау» бетінде жүктеңіз.",
     },
     "en": {
         "upload_both": "Please upload both files.",
@@ -131,6 +217,47 @@ UI_TEXTS = {
         "import_first": "Please upload data on the 'Import data' page first.",
         "no_latlon": "Objects.csv must contain 'lat' and 'lon' columns.",
         "no_objects_for_filters": "No objects for the selected filters.",
+        # Defects
+        "defects_title": "Diagnostics list",
+        "defects_method": "Control method",
+        "defects_crit": "Criticality",
+        "defects_date_range": "Date range",
+        "defects_no_records": "No records for selected filters.",
+        "defects_table": "Diagnostics table",
+        "defects_summary": "Summary stats",
+        "defects_count": "Diagnostics count",
+        "defects_crit_dist": "Criticality distribution",
+
+        # History
+        "history_title": "Diagnostics history by object",
+        "history_select_object": "Select object",
+        "history_no_objects": "No objects in DB yet. Please upload data on the 'Import data' page first.",
+        "history_no_inspections": "No diagnostics for the selected object yet.",
+        "history_table": "Inspection history",
+        "history_stats": "Criticality stats",
+        "history_col_date": "Date",
+        "history_col_method": "Method",
+        "history_col_defect": "Defect found",
+        "history_col_crit": "Criticality (ml_label)",
+        "history_col_descr": "Description",
+
+        # Dashboard
+        "dashboard_title": "Diagnostics dashboard",
+        "dashboard_kpi_title": "KPI — key system indicators",
+        "dashboard_kpi_inspections": "Inspections",
+        "dashboard_kpi_objects": "Unique objects",
+        "dashboard_kpi_defects": "Found defects",
+        "dashboard_kpi_high": "High criticality",
+        "dashboard_crit_title": "Defects distribution by criticality",
+        "dashboard_crit_chart_title": "Defects distribution by criticality",
+        "dashboard_crit_no_data": "No criticality data.",
+
+        # GPT report
+        "report_title": "GPT report on diagnostics",
+        "report_summary_title": "Summary info (dashboard data)",
+        "report_generate_btn": "Generate report",
+        "report_wait_msg": "Generating report with GPT...",
+        "report_no_data": "No data for report. Please upload CSV files on the 'Data import' page first.",
     },
 }
 
@@ -735,29 +862,42 @@ def page_map():
 
 
 
+def _crit_format(value: str) -> str:
+    """Локализуем High/Medium/Low в зависимости от языка UI."""
+    lang = st.session_state.get("ui_lang", "ru")
+    key = str(value).strip()
+    # пробуем и с заглавной, и в нижнем регистре
+    return (
+        CRIT_LABELS.get(lang, {}).get(key, None)
+        or CRIT_LABELS.get(lang, {}).get(key.capitalize(), key)
+    )
+
+
 def page_defects():
-    st.title("Список дефектов / диагностик")
+    st.title(t("defects_title"))
 
     if st.session_state.diagnostics_df is None:
-        st.warning("Сначала загрузите данные на странице 'Импорт данных'.")
+        st.warning(t("import_first"))
         return
 
     diagnostics_df = st.session_state.diagnostics_df.copy()
 
-    st.subheader("Фильтры")
+    st.subheader(t("filters_title"))
 
-    # Фильтр по методу
+    # ---- фильтр по методу ----
     if "method" in diagnostics_df.columns:
         all_methods = sorted(diagnostics_df["method"].dropna().unique())
         selected_methods = st.multiselect(
-            "Метод контроля",
+            t("defects_method"),
             options=all_methods,
             default=all_methods,
         )
         if selected_methods:
-            diagnostics_df = diagnostics_df[diagnostics_df["method"].isin(selected_methods)]
+            diagnostics_df = diagnostics_df[
+                diagnostics_df["method"].isin(selected_methods)
+            ]
 
-    # Фильтр по критичности / severity
+    # ---- фильтр по критичности ----
     crit_col = None
     if "criticality" in diagnostics_df.columns:
         crit_col = "criticality"
@@ -767,14 +907,17 @@ def page_defects():
     if crit_col is not None:
         all_crit = sorted(diagnostics_df[crit_col].dropna().unique())
         selected_crit = st.multiselect(
-            "Критичность",
+            t("defects_crit"),
             options=all_crit,
             default=all_crit,
+            format_func=_crit_format,
         )
         if selected_crit:
-            diagnostics_df = diagnostics_df[diagnostics_df[crit_col].isin(selected_crit)]
+            diagnostics_df = diagnostics_df[
+                diagnostics_df[crit_col].isin(selected_crit)
+            ]
 
-    # Фильтр по диапазону дат (если есть колонка date)
+    # ---- фильтр по датам ----
     if "date" in diagnostics_df.columns:
         diagnostics_df["date_parsed"] = pd.to_datetime(
             diagnostics_df["date"], errors="coerce"
@@ -784,41 +927,46 @@ def page_defects():
 
         if pd.notnull(min_date) and pd.notnull(max_date):
             start_date, end_date = st.date_input(
-                "Диапазон дат",
+                t("defects_date_range"),
                 value=(min_date.date(), max_date.date()),
             )
-
             if start_date and end_date:
-                mask = (diagnostics_df["date_parsed"].dt.date >= start_date) & (
-                    diagnostics_df["date_parsed"].dt.date <= end_date
-                )
+                mask = (
+                    diagnostics_df["date_parsed"].dt.date >= start_date
+                ) & (diagnostics_df["date_parsed"].dt.date <= end_date)
                 diagnostics_df = diagnostics_df[mask]
 
     st.markdown("---")
 
     if diagnostics_df.empty:
-        st.warning("По выбранным фильтрам нет записей.")
+        st.warning(t("defects_no_records"))
         return
 
-    st.subheader("Таблица диагностик")
-
+    # Таблица
+    st.subheader(t("defects_table"))
     cols_to_show = [
-        col for col in diagnostics_df.columns
-        if col not in ["date_parsed"]
+        c for c in diagnostics_df.columns if c not in ["date_parsed"]
     ]
-    st.dataframe(diagnostics_df[cols_to_show].head(300))
+    st.dataframe(diagnostics_df[cols_to_show].head(300), use_container_width=True)
 
-    st.subheader("Краткая статистика")
-    st.write("Количество диагностик:", len(diagnostics_df))
+    # Краткая статистика
+    st.subheader(t("defects_summary"))
+    st.write(f"{t('defects_count')}: {len(diagnostics_df)}")
 
     if crit_col is not None:
-        st.write("Распределение по критичности:")
-        st.dataframe(diagnostics_df[crit_col].value_counts())
+        st.write(t("defects_crit_dist") + ":")
+        counts = diagnostics_df[crit_col].value_counts().reset_index()
+        counts.columns = ["_crit_raw", "count"]
+        counts[t("criticality")] = counts["_crit_raw"].apply(_crit_format)
+        st.dataframe(
+            counts[[t("criticality"), "count"]],
+            use_container_width=True,
+        )
+
 
 def page_history():
-    st.title("История диагностик по объекту")
+    st.title(t("history_title"))
 
-    # Берём объекты из базы
     session = SessionLocal()
     try:
         objects = session.query(Object).order_by(Object.id).all()
@@ -828,20 +976,21 @@ def page_history():
         return
 
     if not objects:
-        st.info("В базе нет объектов. Сначала загрузите данные на странице «Импорт данных».")
+        st.info(t("history_no_objects"))
         session.close()
         return
 
-    # Формируем варианты для selectbox: "101 – Bridge A"
-    options = {f"{obj.id} – {obj.object_name}": obj.id for obj in objects}
-
+    # options: "2 – Кольсоль" и т.п.
+    options = {
+        f"{obj.id} – {obj.object_name}": obj.id for obj in objects
+    }
     selected_label = st.selectbox(
-        "Выберите объект",
-        list(options.keys())
+        t("history_select_object"),
+        list(options.keys()),
     )
     selected_object_id = options[selected_label]
 
-    # Достаём все обследования этого объекта
+    # тянем все обследования по объекту
     try:
         inspections = (
             session.query(Inspection)
@@ -857,183 +1006,122 @@ def page_history():
         session.close()
 
     if not inspections:
-        st.info("Для выбранного объекта пока нет диагностик в базе.")
+        st.info(t("history_no_inspections"))
         return
 
-    # Переводим в DataFrame для удобного отображения
+    # формируем DataFrame
     data = []
+    col_date = t("history_col_date")
+    col_method = t("history_col_method")
+    col_defect = t("history_col_defect")
+    col_crit = t("history_col_crit")
+    col_descr = t("history_col_descr")
+
     for insp in inspections:
-        data.append({
-            "Дата": insp.date,
-            "Метод": insp.method,
-            "Есть дефект": bool(insp.defect_found),
-            "Критичность (ml_label)": insp.ml_label,
-            "Описание": insp.defect_descr,
-        })
+        data.append(
+            {
+                col_date: insp.date,
+                col_method: insp.method,
+                col_defect: bool(insp.defect_found),
+                col_crit: _crit_format(insp.ml_label),
+                col_descr: insp.defect_descr,
+            }
+        )
 
     df_hist = pd.DataFrame(data)
 
-    st.subheader("История обследований")
+    st.subheader(t("history_table"))
     st.dataframe(df_hist, use_container_width=True)
 
-    # Небольшая агрегированная статистика по годам / критичности
     st.markdown("---")
-    st.subheader("Статистика по критичности")
-
-    if "Критичность (ml_label)" in df_hist.columns:
-        st.write(df_hist["Критичность (ml_label)"].value_counts())
+    st.subheader(t("history_stats"))
+    if col_crit in df_hist.columns:
+        st.write(df_hist[col_crit].value_counts())
 
 
 def page_dashboard():
-    st.title("Дашборд диагностических данных")
+    st.title(t("dashboard_title"))
 
-    # Проверяем, что данные загружены
-    if "diagnostics_df" not in st.session_state or "objects_df" not in st.session_state:
-        st.warning("Сначала загрузите данные на странице «Импорт данных».")
+    if (
+        "diagnostics_df" not in st.session_state
+        or "objects_df" not in st.session_state
+    ):
+        st.warning(t("import_first"))
         return
 
     diagnostics = st.session_state["diagnostics_df"].copy()
     objects = st.session_state["objects_df"].copy()
 
     if diagnostics.empty or objects.empty:
-        st.warning("Недостаточно данных для отображения дашборда.")
+        st.warning(t("no_objects_for_filters"))
         return
 
-    # Гарантируем необходимые поля
+    # дата / год
     if "date" in diagnostics.columns:
-        diagnostics["date"] = pd.to_datetime(diagnostics["date"], errors="coerce")
+        diagnostics["date"] = pd.to_datetime(
+            diagnostics["date"], errors="coerce"
+        )
         diagnostics["year"] = diagnostics["date"].dt.year
     else:
         diagnostics["year"] = None
 
+    # severity нормализуем
     if "severity" in diagnostics.columns:
-        diagnostics["severity"] = diagnostics["severity"].astype(str).str.capitalize()
+        diagnostics["severity"] = (
+            diagnostics["severity"].astype(str).str.lower()
+        )
+    elif "criticality" in diagnostics.columns:
+        diagnostics["severity"] = (
+            diagnostics["criticality"].astype(str).str.lower()
+        )
     else:
-        diagnostics["severity"] = "Unknown"
+        diagnostics["severity"] = "unknown"
 
     if "defect_found" not in diagnostics.columns:
         diagnostics["defect_found"] = diagnostics["severity"].apply(
-            lambda x: 1 if x.lower() != "low" else 0
+            lambda x: 0 if x == "low" else 1
         )
 
-    st.markdown("## KPI — ключевые показатели системы")
-    col1, col2, col3, col4 = st.columns(4)
+    st.markdown("## " + t("dashboard_kpi_title"))
 
+    col1, col2, col3, col4 = st.columns(4)
     total_inspections = len(diagnostics)
     total_objects = objects["object_id"].nunique()
     total_defects = int(diagnostics["defect_found"].sum())
-    total_high = (diagnostics["severity"].str.lower() == "high").sum()
+    total_high = (diagnostics["severity"] == "high").sum()
 
-    col1.metric("Обследований", total_inspections)
-    col2.metric("Уникальных объектов", total_objects)
-    col3.metric("Найдено дефектов", total_defects)
-    col4.metric("Высокая критичность", total_high)
+    col1.metric(t("dashboard_kpi_inspections"), total_inspections)
+    col2.metric(t("dashboard_kpi_objects"), total_objects)
+    col3.metric(t("dashboard_kpi_defects"), total_defects)
+    col4.metric(t("dashboard_kpi_high"), total_high)
 
     st.markdown("---")
 
-    # -------------------------------
-    # 1. ДЕФЕКТЫ ПО МЕТОДАМ КОНТРОЛЯ
-    # -------------------------------
-    st.subheader("Дефекты по методам контроля")
+    # -------- распределение по критичности --------
+    st.subheader(t("dashboard_crit_title"))
 
-    if "method" in diagnostics.columns:
-        df_methods = (
-            diagnostics[diagnostics["defect_found"] == 1]
-            .groupby("method")["defect_found"]
-            .sum()
-            .reset_index()
+    if diagnostics["severity"].notna().any():
+        crit_counts = (
+            diagnostics["severity"].value_counts().reset_index()
+        )
+        crit_counts.columns = ["severity_raw", "count"]
+        crit_counts["severity_ui"] = crit_counts["severity_raw"].apply(
+            _crit_format
         )
 
-        if len(df_methods) > 0:
-            fig_methods = px.bar(
-                df_methods,
-                x="method",
-                y="defect_found",
-                title="Количество дефектов по методам контроля",
-                color="method",
-            )
-            st.plotly_chart(fig_methods, use_container_width=True)
-        else:
-            st.info("Нет данных о дефектах для анализа по методам.")
-    else:
-        st.warning("В данных отсутствует колонка 'method'.")
-
-    st.markdown("---")
-
-    # -------------------------------
-    # 2. РАСПРЕДЕЛЕНИЕ ПО КРИТИЧНОСТИ
-    # -------------------------------
-    st.subheader("Распределение дефектов по критичности")
-
-    crit_df = diagnostics["severity"].value_counts().reset_index()
-    crit_df.columns = ["severity", "count"]
-
-    if len(crit_df) > 0:
-        fig_crit = px.bar(
-            crit_df,
-            x="severity",
+        fig = px.bar(
+            crit_counts,
+            x="severity_ui",
             y="count",
-            title="Распределение дефектов по критичности",
-            color="severity",
+            title=t("dashboard_crit_chart_title"),
+            labels={
+                "severity_ui": t("criticality"),
+                "count": "count",
+            },
         )
-        st.plotly_chart(fig_crit, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
     else:
-        st.info("Нет данных о критичности.")
-
-    st.markdown("---")
-
-    # -------------------------------
-    # 3. ДИНАМИКА ОБСЛЕДОВАНИЙ ПО ГОДАМ
-    # -------------------------------
-    st.subheader("Динамика обследований по годам")
-
-    if diagnostics["year"].notna().any():
-        df_year = (
-            diagnostics.dropna(subset=["year"])
-            .groupby("year")["object_id"]
-            .count()
-            .reset_index()
-        )
-
-        fig_years = px.line(
-            df_year,
-            x="year",
-            y="object_id",
-            markers=True,
-            title="Количество обследований по годам"
-        )
-        st.plotly_chart(fig_years, use_container_width=True)
-    else:
-        st.info("Нет данных по годам.")
-
-    st.markdown("---")
-
-
-# -------------------------------
-    # 4. ТОП-5 ОБЪЕКТОВ ПО ДЕФЕКТАМ
-    # -------------------------------
-    st.subheader("ТОП-5 объектов по количеству дефектов")
-
-    if "object_id" in diagnostics.columns:
-        df_top = (
-            diagnostics[diagnostics["defect_found"] == 1]
-            .groupby("object_id")["defect_found"]
-            .sum()
-            .reset_index()
-            .sort_values("defect_found", ascending=False)
-            .head(5)
-        )
-
-        fig_top = px.bar(
-            df_top,
-            x="object_id",
-            y="defect_found",
-            title="Объекты с наибольшим количеством дефектов",
-            color="object_id",
-        )
-        st.plotly_chart(fig_top, use_container_width=True)
-    else:
-        st.warning("В данных отсутствует колонка object_id.")
+        st.info(t("dashboard_crit_no_data"))
 
 def page_report():
     st.title("GPT-Отчёт по результатам диагностики")
