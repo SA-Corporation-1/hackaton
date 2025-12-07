@@ -1299,6 +1299,7 @@ lang_code = st.sidebar.selectbox(
 )
 st.session_state.ui_lang = lang_code
 
+# выбор страницы (все подписи через t(), чтобы язык менялся)
 page = st.sidebar.radio(
     t("menu_select_page"),
     [
